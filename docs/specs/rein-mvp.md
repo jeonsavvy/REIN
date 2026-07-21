@@ -9,6 +9,8 @@ Status: accepted implementation specification
 - `GET /api/runs/:id/events` replays sanitized events as SSE, atomically claims
   a queued run, and keeps the request open while orchestration executes.
 - `GET /api/runs/:id` returns the current run, events, evidence, and receipts.
+- `POST /api/runs/:id/report` may re-run Gemini synthesis over already settled
+  evidence. It cannot create, reserve, sign, or settle a payment.
 - `GET /api/catalog` returns product prices, freshness, and current availability.
 - Paid GET product routes require x402 in live mode and an explicit non-chain
   demo token in demo mode.
@@ -25,8 +27,12 @@ Status: accepted implementation specification
 7. On known failure release the reservation. On ambiguous settlement mark
    `reconciling` and never retry blindly.
 8. Persist the receipt before emitting `payment.settled`.
-9. Ask Gemini to synthesize only from purchased evidence; deterministic demo
-   mode uses the same evidence contract.
+9. Persist and display a deterministic evidence preview immediately after all
+   payments settle, then ask Gemini to synthesize only from that evidence.
+10. Use minimal thinking for the two bounded structured calls. Planning and
+    report synthesis each have a 30-second deadline.
+11. If Gemini planning is unavailable, a visibly degraded selector may use only
+    the fixed catalog, goal keywords, and budget before the policy gate.
 
 ## Invariants
 
@@ -60,6 +66,11 @@ Cloud Run live mode uses Firestore transactions.
 - Timeout after payment submission records `reconciling`; it is not retried.
 - A report-only model timeout after settled payments falls back to a deterministic
   report over the already purchased evidence and never starts another payment.
+- The deterministic report is visible while final Gemini synthesis is still
+  running, so model latency never hides already purchased evidence or receipts.
+- Live fallback reports are visibly marked as degraded. Up to two report-only
+  recovery attempts may reuse fully settled evidence; the recovery claim is
+  atomic and stale after 60 seconds.
 - SSE reconnect replays stored events and does not claim a running/completed run.
 
 ## Verification

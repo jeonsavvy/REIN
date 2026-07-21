@@ -1,6 +1,9 @@
 export type ProductId = "market_snapshot" | "github_health";
 export type RuntimeMode = "demo" | "live";
 export type StorageMode = "memory" | "firestore";
+export type ReportRecoveryState = "running" | "failed" | "succeeded";
+export type SelectionMode = "gemini" | "rules";
+export type ReportMode = "preview" | "gemini" | "fallback";
 
 export interface ProductDefinition {
   id: ProductId;
@@ -90,7 +93,12 @@ export interface RunRecord {
   claimId?: string;
   nextEventSeq: number;
   summary?: ResearchBrief;
-  error?: RunError;
+  selectionMode?: SelectionMode;
+  reportMode?: ReportMode;
+  error?: RunError | null;
+  reportRecoveryState?: ReportRecoveryState;
+  reportRecoveryAttempts?: number;
+  reportRecoveryStartedAt?: string;
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
@@ -99,6 +107,7 @@ export interface RunRecord {
 export type RunEventType =
   | "run.started"
   | "catalog.loaded"
+  | "selection.fallback"
   | "choice.explained"
   | "policy.approved"
   | "policy.denied"
@@ -106,7 +115,11 @@ export type RunEventType =
   | "payment.settled"
   | "payment.reconciling"
   | "data.received"
+  | "report.preview_ready"
   | "report.completed"
+  | "report.retry_started"
+  | "report.retry_completed"
+  | "report.retry_failed"
   | "run.error";
 
 export interface RunEvent {

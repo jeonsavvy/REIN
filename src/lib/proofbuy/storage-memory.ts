@@ -1,6 +1,10 @@
 import { addAtomic, parseAtomic, safeSubtractAtomic } from "./amount";
 import { createId } from "./crypto";
 import { PolicyDeniedError } from "./errors";
+import {
+  MAX_REPORT_RECOVERY_ATTEMPTS,
+  REPORT_RECOVERY_STALE_MS,
+} from "./constants";
 import type { NewRunEvent, ProofBuyStore } from "./storage";
 import type {
   NewRunInput,
@@ -90,6 +94,31 @@ export class MemoryProofBuyStore implements ProofBuyStore {
     run.status = "running";
     run.claimId = claimId;
     run.updatedAt = new Date().toISOString();
+    return true;
+  }
+
+  async claimReportRecovery(runId: string): Promise<boolean> {
+    const run = this.state.runs.get(runId);
+    if (!run) return false;
+    const attempts = run.reportRecoveryAttempts ?? 0;
+    const startedAt = run.reportRecoveryStartedAt
+      ? new Date(run.reportRecoveryStartedAt).getTime()
+      : 0;
+    const active =
+      run.reportRecoveryState === "running" &&
+      Date.now() - startedAt < REPORT_RECOVERY_STALE_MS;
+    if (
+      active ||
+      run.reportRecoveryState === "succeeded" ||
+      attempts >= MAX_REPORT_RECOVERY_ATTEMPTS
+    ) {
+      return false;
+    }
+    const now = new Date().toISOString();
+    run.reportRecoveryState = "running";
+    run.reportRecoveryAttempts = attempts + 1;
+    run.reportRecoveryStartedAt = now;
+    run.updatedAt = now;
     return true;
   }
 

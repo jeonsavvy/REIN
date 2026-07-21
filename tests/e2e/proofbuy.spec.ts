@@ -1,10 +1,12 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import type { ResearchBrief, RunView } from "@/lib/proofbuy/types";
 
 const eventTypes = [
   "run.started",
   "catalog.loaded",
+  "selection.fallback",
   "choice.explained",
   "policy.approved",
   "policy.denied",
@@ -12,9 +14,63 @@ const eventTypes = [
   "payment.settled",
   "payment.reconciling",
   "data.received",
+  "report.preview_ready",
   "report.completed",
+  "report.retry_started",
+  "report.retry_completed",
+  "report.retry_failed",
   "run.error",
 ];
+
+const fallbackSummary: ResearchBrief = {
+  headline: "SOL–ETH 시장·개발 모멘텀 비교",
+  executiveSummary:
+    "시장과 개발 데이터는 서로 다른 시간축을 보여주므로 각 신호를 나란히 확인합니다.",
+  findings: [
+    {
+      label: "24시간 시장 모멘텀",
+      value: "ETH 우위",
+      interpretation: "구매한 시장 스냅샷의 변화율을 비교했습니다.",
+    },
+  ],
+  caveats: [
+    "Gemini 응답이 늦어져 결제된 데이터는 REIN의 규칙 기반 분석으로 정리했습니다.",
+  ],
+  generatedBy: "REIN 규칙 기반 분석",
+};
+
+function fallbackRunView(summary: ResearchBrief = fallbackSummary): RunView {
+  const now = "2026-07-22T00:00:00.000Z";
+  return {
+    run: {
+      id: "fallback-ui",
+      goal: "SOL과 ETH의 개발·시장 모멘텀 비교",
+      maxBudgetAtomic: "3000",
+      reservedAtomic: "0",
+      spentAtomic: "3000",
+      status: "completed",
+      mode: "live",
+      nextEventSeq: 2,
+      summary,
+      createdAt: now,
+      updatedAt: now,
+      completedAt: now,
+    },
+    events: [
+      {
+        id: "evt_fallback",
+        seq: 1,
+        type: "report.completed",
+        tone: "success",
+        title: "비교 보고서를 완성했습니다",
+        detail: "구매 근거를 규칙 기반으로 정리했습니다.",
+        at: now,
+      },
+    ],
+    payments: [],
+    evidence: [],
+  };
+}
 
 test.beforeAll(async () => {
   await mkdir(path.resolve("artifacts/qa"), { recursive: true });
@@ -69,6 +125,116 @@ test("shows a policy denial without attempting payment", async ({ page }) => {
   ).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("정책 중단")).toBeVisible();
   await expect(page.getByTestId("receipt-list")).toHaveCount(0);
+});
+
+test("labels a preserved report and retries only Gemini analysis", async ({
+  page,
+}, testInfo) => {
+  const geminiView = fallbackRunView({
+    ...fallbackSummary,
+    headline: "Gemini가 다시 분석한 비교 결과",
+    generatedBy: "Gemini 3.5 Flash",
+  });
+  geminiView.run.reportRecoveryState = "succeeded";
+  geminiView.run.reportRecoveryAttempts = 1;
+
+  await page.route("**/api/catalog", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ mode: "live", products: [] }),
+    });
+  });
+  await page.route("**/api/runs/fallback-ui/events", async (route) => {
+    const event = fallbackRunView().events[0];
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: `event: report.completed\ndata: ${JSON.stringify(event)}\n\n`,
+    });
+  });
+  await page.route("**/api/runs/fallback-ui/report", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(geminiView),
+    });
+  });
+  await page.route("**/api/runs/fallback-ui", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(fallbackRunView()),
+    });
+  });
+
+  await page.goto("/?run=fallback-ui");
+  await expect(page.getByText("결제 완료 · 규칙 기반 결과")).toBeVisible();
+  await expect(page.getByTestId("run-status")).toContainText("완료 · 규칙 기반");
+  await expect(page.getByText("추가 결제는 발생하지 않았습니다.")).toBeVisible();
+  await page.screenshot({
+    path: path.resolve(`artifacts/qa/${testInfo.project.name}-fallback.png`),
+    fullPage: true,
+  });
+
+  await page.getByRole("button", { name: "Gemini 분석만 다시 시도" }).click();
+  await expect(page.getByRole("heading", { name: "Gemini가 다시 분석한 비교 결과" })).toBeVisible();
+  await expect(page.getByText("결제 완료 · 규칙 기반 결과")).toHaveCount(0);
+  await expect(page.getByTestId("run-status")).toContainText("완료");
+});
+
+test("shows purchased results while Gemini finishes the final report", async ({
+  page,
+}, testInfo) => {
+  const preview = fallbackRunView();
+  preview.run.status = "running";
+  preview.run.reportMode = "preview";
+  preview.run.selectionMode = "rules";
+  preview.events[0] = {
+    ...preview.events[0],
+    type: "report.preview_ready",
+    tone: "pending",
+    title: "구매 데이터를 먼저 정리했습니다",
+    detail: "Gemini가 최종 분석을 작성하고 있습니다.",
+  };
+
+  await page.route("**/api/catalog", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ mode: "live", products: [] }),
+    });
+  });
+  await page.route("**/api/runs/preview-ui/events", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: "",
+    });
+  });
+  await page.route("**/api/runs/preview-ui", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ...preview,
+        run: { ...preview.run, id: "preview-ui" },
+      }),
+    });
+  });
+
+  await page.goto("/?run=preview-ui");
+  await expect(page.getByText("결제 완료 · Gemini 분석 중")).toBeVisible();
+  await expect(page.getByText("상품 선택 · 고정 규칙 사용")).toBeVisible();
+  await expect(page.getByTestId("run-status")).toContainText(
+    "결제 완료 · 분석 중",
+  );
+  await expect(page.getByTestId("research-report")).toBeVisible();
+  await expect(page.getByText("추가 결제는 발생하지 않았습니다.")).toHaveCount(0);
+  await page.screenshot({
+    path: path.resolve(`artifacts/qa/${testInfo.project.name}-preview.png`),
+    fullPage: true,
+  });
 });
 
 test("protects paid resources with a 402 challenge and rejects unknown proof", async ({

@@ -8,6 +8,10 @@ import {
 import { addAtomic, parseAtomic, safeSubtractAtomic } from "./amount";
 import { createId } from "./crypto";
 import { PolicyDeniedError } from "./errors";
+import {
+  MAX_REPORT_RECOVERY_ATTEMPTS,
+  REPORT_RECOVERY_STALE_MS,
+} from "./constants";
 import type { NewRunEvent, ProofBuyStore } from "./storage";
 import type {
   NewRunInput,
@@ -78,6 +82,37 @@ export class FirestoreProofBuyStore implements ProofBuyStore {
         status: "running",
         claimId,
         updatedAt: new Date().toISOString(),
+      });
+      return true;
+    });
+  }
+
+  async claimReportRecovery(runId: string): Promise<boolean> {
+    const ref = this.db.collection("runs").doc(runId);
+    return this.db.runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return false;
+      const run = doc.data() as RunRecord;
+      const attempts = run.reportRecoveryAttempts ?? 0;
+      const startedAt = run.reportRecoveryStartedAt
+        ? new Date(run.reportRecoveryStartedAt).getTime()
+        : 0;
+      const active =
+        run.reportRecoveryState === "running" &&
+        Date.now() - startedAt < REPORT_RECOVERY_STALE_MS;
+      if (
+        active ||
+        run.reportRecoveryState === "succeeded" ||
+        attempts >= MAX_REPORT_RECOVERY_ATTEMPTS
+      ) {
+        return false;
+      }
+      const now = new Date().toISOString();
+      tx.update(ref, {
+        reportRecoveryState: "running",
+        reportRecoveryAttempts: attempts + 1,
+        reportRecoveryStartedAt: now,
+        updatedAt: now,
       });
       return true;
     });

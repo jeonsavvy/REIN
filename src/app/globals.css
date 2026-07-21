@@ -599,10 +599,113 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(7, 95, 72, 0.13);
 }
 
+.status-pill.degraded {
+  border-color: rgba(153, 103, 16, 0.45);
+  color: var(--ochre);
+}
+
+.status-pill.degraded i {
+  background: var(--ochre);
+  box-shadow: 0 0 0 3px rgba(153, 103, 16, 0.13);
+}
+
+.status-pill.processing {
+  border-color: rgba(7, 95, 72, 0.42);
+  color: var(--emerald);
+}
+
+.status-pill.processing i {
+  background: var(--emerald);
+  box-shadow: 0 0 0 3px rgba(7, 95, 72, 0.13);
+  animation: status-pulse 1.4s ease-in-out infinite;
+}
+
 .status-pill.denied i,
 .status-pill.failed i {
   background: var(--danger);
   box-shadow: 0 0 0 3px rgba(159, 47, 37, 0.12);
+}
+
+.report-mode-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 32px;
+  padding: 18px 20px;
+  border: 1px solid rgba(153, 103, 16, 0.48);
+  border-left: 4px solid var(--ochre);
+  background: var(--ochre-soft);
+}
+
+.report-mode-notice strong {
+  color: var(--ochre);
+  font-size: 14px;
+}
+
+.report-mode-notice p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.report-mode-notice small {
+  display: block;
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.report-mode-notice button {
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border: 1px solid var(--ochre);
+  background: var(--paper-raised);
+  color: var(--ochre);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.report-mode-notice.processing {
+  border-color: rgba(7, 95, 72, 0.4);
+  border-left-color: var(--emerald);
+  background: rgba(7, 95, 72, 0.08);
+}
+
+.report-mode-notice.processing strong {
+  color: var(--emerald);
+}
+
+.selection-mode-notice {
+  margin-top: 24px;
+  padding: 13px 16px;
+  border-left: 3px solid var(--ochre);
+  background: rgba(153, 103, 16, 0.07);
+}
+
+.selection-mode-notice strong {
+  color: var(--ochre);
+  font-size: 13px;
+}
+
+.selection-mode-notice p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .result-spotlight {
@@ -1362,6 +1465,16 @@ button:disabled {
 
   .result-spotlight {
     padding: 24px 20px;
+  }
+
+  .report-mode-notice {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .report-mode-notice button {
+    width: 100%;
   }
 
   .result-spotlight h3 {

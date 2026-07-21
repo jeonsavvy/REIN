@@ -26,6 +26,7 @@ import type {
 const RUN_EVENT_TYPES: RunEvent["type"][] = [
   "run.started",
   "catalog.loaded",
+  "selection.fallback",
   "choice.explained",
   "policy.approved",
   "policy.denied",
@@ -33,7 +34,11 @@ const RUN_EVENT_TYPES: RunEvent["type"][] = [
   "payment.settled",
   "payment.reconciling",
   "data.received",
+  "report.preview_ready",
   "report.completed",
+  "report.retry_started",
+  "report.retry_completed",
+  "report.retry_failed",
   "run.error",
 ];
 
@@ -119,18 +124,22 @@ function phaseState(
   events: RunEvent[],
   status: RunStatus | "idle",
   mode: RuntimeMode,
+  degradedReport: boolean,
 ): Phase[] {
   const has = (type: RunEvent["type"]) => events.some((event) => event.type === type);
   const failed = status === "failed" || status === "denied";
   const reconciling = status === "reconciling";
   const selectionDone = has("choice.explained") || has("policy.denied");
+  const selectionFallback = has("selection.fallback");
   const policyDone = has("policy.approved");
   const paymentStarted = has("payment.requested");
   const paymentDone = has("data.received");
-  const reportDone = has("report.completed");
+  const reportDone = has("report.completed") || has("report.retry_completed");
 
   const selectState: PhaseState = selectionDone
-    ? "done"
+    ? selectionFallback
+      ? "warning"
+      : "done"
     : failed
       ? "error"
       : status === "running"
@@ -153,7 +162,9 @@ function phaseState(
           ? "active"
           : "waiting";
   const reportState: PhaseState = reportDone
-    ? "done"
+    ? degradedReport
+      ? "warning"
+      : "done"
     : failed && paymentDone
       ? "error"
       : paymentDone && status === "running"
@@ -205,6 +216,8 @@ export function ReinDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>();
   const [copied, setCopied] = useState<string>();
+  const [retryingReport, setRetryingReport] = useState(false);
+  const [reportRetryError, setReportRetryError] = useState<string>();
   const sourceRef = useRef<EventSource | null>(null);
   const restoredRef = useRef(false);
 
@@ -274,6 +287,8 @@ export function ReinDashboard() {
           source.close();
           setSubmitting(false);
           void refreshRun(id);
+        } else if (event.type === "report.preview_ready") {
+          void refreshRun(id);
         }
       };
       for (const type of RUN_EVENT_TYPES) source.addEventListener(type, receive);
@@ -338,6 +353,7 @@ export function ReinDashboard() {
       return;
     }
     setFormError(undefined);
+    setReportRetryError(undefined);
     setEvents([]);
     setView(undefined);
     setSubmitting(true);
@@ -382,11 +398,42 @@ export function ReinDashboard() {
     setView(undefined);
     setSubmitting(false);
     setFormError(undefined);
+    setReportRetryError(undefined);
     window.history.replaceState({}, "", window.location.pathname);
     document.getElementById("research-brief")?.scrollIntoView({
       behavior: "auto",
       block: "start",
     });
+  }
+
+  async function retryReport() {
+    if (!runId || retryingReport) return;
+    setRetryingReport(true);
+    setReportRetryError(undefined);
+    try {
+      const response = await fetch(
+        `/api/runs/${encodeURIComponent(runId)}/report`,
+        { method: "POST" },
+      );
+      const body = (await response.json()) as RunView & {
+        error?: { message?: string };
+      };
+      if (!response.ok || !body.run) {
+        throw new Error(body.error?.message ?? "Gemini 분석을 다시 시작할 수 없습니다.");
+      }
+      setView(body);
+      setEvents(body.events);
+      setMode(body.run.mode);
+    } catch (error) {
+      setReportRetryError(
+        error instanceof Error
+          ? error.message
+          : "Gemini 분석을 다시 시작할 수 없습니다.",
+      );
+      await refreshRun(runId);
+    } finally {
+      setRetryingReport(false);
+    }
   }
 
   async function copyText(value: string, key: string) {
@@ -421,13 +468,40 @@ export function ReinDashboard() {
   const status: RunStatus | "idle" =
     view?.run.status ?? (submitting ? "running" : "idle");
   const summary = view?.run.summary;
+  const usedFallbackReport =
+    mode === "live" &&
+    status === "completed" &&
+    (view?.run.reportMode === "fallback" ||
+      (!view?.run.reportMode && summary?.generatedBy === "REIN 규칙 기반 분석"));
+  const reportPreview =
+    mode === "live" &&
+    status === "running" &&
+    view?.run.reportMode === "preview" &&
+    Boolean(summary);
+  const usedFallbackSelection =
+    mode === "live" && view?.run.selectionMode === "rules";
   const lastEvent = events.at(-1);
-  const phases = useMemo(() => phaseState(events, status, mode), [events, mode, status]);
+  const phases = useMemo(
+    () => phaseState(events, status, mode, usedFallbackReport),
+    [events, mode, status, usedFallbackReport],
+  );
   const availableProducts = catalog.filter((product) => product.available);
   const allProductsPrice = availableProducts
     .reduce((total, product) => total + BigInt(product.priceAtomic), 0n)
     .toString();
   const runError = view?.run.error;
+  const reportAttempts = view?.run.reportRecoveryAttempts ?? 0;
+  const canRetryReport = Boolean(
+    runId &&
+      mode === "live" &&
+      reportAttempts < 2 &&
+      view?.run.reportRecoveryState !== "running" &&
+      view?.run.reportRecoveryState !== "succeeded" &&
+      (usedFallbackReport ||
+        (status === "failed" &&
+          view?.evidence.length &&
+          (runError?.code === "MODEL_TIMEOUT" || runError?.code === "MODEL_ERROR"))),
+  );
   const runUrl = runId && typeof window !== "undefined" ? window.location.href : undefined;
 
   return (
@@ -621,7 +695,11 @@ export function ReinDashboard() {
             <div>
               <span>진행 상황</span>
               <h2 id="progress-title">
-                {summary
+                {reportPreview
+                  ? "결제는 끝났고 Gemini가 결과를 정리하고 있습니다"
+                  : usedFallbackReport
+                  ? "결제된 데이터로 결과를 보존했습니다"
+                  : summary
                   ? "조사가 끝났습니다"
                   : status === "idle"
                     ? "시작하면 네 단계로 진행됩니다"
@@ -629,45 +707,99 @@ export function ReinDashboard() {
               </h2>
             </div>
             <span
-              className={`status-pill ${status}`}
+              className={`status-pill ${reportPreview ? "processing" : usedFallbackReport ? "degraded" : status}`}
               aria-live="polite"
               data-testid="run-status"
               data-status={status}
             >
-              <i /> {STATUS_LABELS[status]}
+              <i />{" "}
+              {reportPreview
+                ? "결제 완료 · 분석 중"
+                : usedFallbackReport
+                  ? "완료 · 규칙 기반"
+                  : STATUS_LABELS[status]}
             </span>
           </div>
 
           {summary ? (
-            <article className="result-spotlight" data-testid="research-report">
-              <span className="result-label">
-                {mode === "live" ? "구매한 근거로 만든 결론" : "데모 데이터로 만든 결론"}
-              </span>
-              <h3>{summary.headline}</h3>
-              <p>{summary.executiveSummary}</p>
-              <dl>
-                <div>
-                  <dt>총 지출</dt>
-                  <dd>{formatUsdcAtomic(spentAtomic)} USDC</dd>
+            <>
+              {usedFallbackSelection && (
+                <div className="selection-mode-notice" role="status">
+                  <strong>상품 선택 · 고정 규칙 사용</strong>
+                  <p>
+                    Gemini 응답이 늦어 목표 키워드, 상품 가격, 예산으로 구매 대상을
+                    골랐습니다. 결제 정책과 지출 한도는 그대로 적용됐습니다.
+                  </p>
                 </div>
-                <div>
-                  <dt>영수증</dt>
-                  <dd>{receipts.length}건</dd>
+              )}
+              {reportPreview && (
+                <div className="report-mode-notice processing" role="status">
+                  <div>
+                    <strong>결제 완료 · Gemini 분석 중</strong>
+                    <p>
+                      구매한 데이터의 계산 결과를 먼저 표시했습니다. Gemini가 최종
+                      문장을 작성하는 동안 영수증과 아래 결과를 바로 확인할 수 있습니다.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <dt>남은 예산</dt>
-                  <dd>{formatUsdcAtomic(remainingAtomic)} USDC</dd>
+              )}
+              {usedFallbackReport && (
+                <div className="report-mode-notice" role="status">
+                  <div>
+                    <strong>결제 완료 · 규칙 기반 결과</strong>
+                    <p>
+                      Gemini가 제한 시간 안에 응답하지 않아 구매한 데이터는 REIN의
+                      계산 규칙으로 정리했습니다. 추가 결제는 발생하지 않았습니다.
+                    </p>
+                    {reportRetryError && <small role="alert">{reportRetryError}</small>}
+                  </div>
+                  {canRetryReport && (
+                    <button
+                      type="button"
+                      onClick={() => void retryReport()}
+                      disabled={retryingReport}
+                    >
+                      {retryingReport ? "Gemini 분석 중…" : "Gemini 분석만 다시 시도"}
+                    </button>
+                  )}
                 </div>
-              </dl>
-              <div className="result-actions">
-                <a href="#receipts">영수증 확인</a>
-                {runUrl && (
-                  <button type="button" onClick={() => void copyText(runUrl, "run-url")}>
-                    {copied === "run-url" ? "주소 복사됨" : "결과 주소 복사"}
-                  </button>
-                )}
-              </div>
-            </article>
+              )}
+              <article className="result-spotlight" data-testid="research-report">
+                <span className="result-label">
+                  {usedFallbackReport
+                    ? "규칙 기반으로 보존한 결론"
+                    : reportPreview
+                      ? "구매 데이터를 먼저 계산한 결과"
+                    : mode === "live"
+                      ? "구매한 근거로 만든 결론"
+                      : "데모 데이터로 만든 결론"}
+                </span>
+                <h3>{summary.headline}</h3>
+                <p>{summary.executiveSummary}</p>
+                <dl>
+                  <div>
+                    <dt>총 지출</dt>
+                    <dd>{formatUsdcAtomic(spentAtomic)} USDC</dd>
+                  </div>
+                  <div>
+                    <dt>영수증</dt>
+                    <dd>{receipts.length}건</dd>
+                  </div>
+                  <div>
+                    <dt>남은 예산</dt>
+                    <dd>{formatUsdcAtomic(remainingAtomic)} USDC</dd>
+                  </div>
+                </dl>
+                <div className="result-actions">
+                  <a href="#receipts">영수증 확인</a>
+                  {runUrl && (
+                    <button type="button" onClick={() => void copyText(runUrl, "run-url")}>
+                      {copied === "run-url" ? "주소 복사됨" : "결과 주소 복사"}
+                    </button>
+                  )}
+                </div>
+              </article>
+            </>
           ) : (
             <div className="run-intro">
               <p>
@@ -693,6 +825,15 @@ export function ReinDashboard() {
               <h3>{runError.message}</h3>
               <p>{runError.recovery}</p>
               <div>
+                {canRetryReport && (
+                  <button
+                    type="button"
+                    onClick={() => void retryReport()}
+                    disabled={retryingReport}
+                  >
+                    {retryingReport ? "Gemini 분석 중…" : "결제 없이 분석 다시 시도"}
+                  </button>
+                )}
                 {runError.code === "INSUFFICIENT_DEVNET_BALANCE" && (
                   <>
                     <a href="https://faucet.solana.com/" target="_blank" rel="noreferrer">
@@ -711,6 +852,7 @@ export function ReinDashboard() {
                   새 조사 준비
                 </button>
               </div>
+              {reportRetryError && <small role="alert">{reportRetryError}</small>}
             </div>
           )}
 

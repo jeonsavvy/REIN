@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
 import { executeRun } from "@/lib/proofbuy/orchestrator";
 import { ProofBuyError } from "@/lib/proofbuy/errors";
@@ -8,12 +8,20 @@ import {
 } from "@/lib/proofbuy/planner";
 import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
 import type { PaymentGateway } from "@/lib/proofbuy/payment";
-import type { PaymentReceipt } from "@/lib/proofbuy/types";
+import type {
+  PaymentReceipt,
+  ResearchBrief,
+  RuntimeMode,
+} from "@/lib/proofbuy/types";
 
 const store = new MemoryProofBuyStore();
 
-async function createClaimedRun(goal: string, maxBudgetAtomic = "3000") {
-  const run = await store.createRun({ goal, maxBudgetAtomic, mode: "demo" });
+async function createClaimedRun(
+  goal: string,
+  maxBudgetAtomic = "3000",
+  mode: RuntimeMode = "demo",
+) {
+  const run = await store.createRun({ goal, maxBudgetAtomic, mode });
   await store.claimRun(run.id, `claim_${run.id}`);
   return run;
 }
@@ -44,6 +52,10 @@ function successfulGateway(): PaymentGateway {
 describe("procurement orchestration", () => {
   beforeEach(async () => {
     await store.reset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("completes two purchases, persists evidence, and emits sanitized milestones", async () => {
@@ -112,7 +124,12 @@ describe("procurement orchestration", () => {
   });
 
   it("completes from purchased evidence when report generation times out", async () => {
-    const run = await createClaimedRun("SOL과 ETH의 개발·시장 모멘텀 비교");
+    vi.stubEnv("SVM_PAY_TO", "4uZJ85RptKhsnVwRnUNsWm5iXwHLysSiyzufR45GeM7P");
+    const run = await createClaimedRun(
+      "SOL과 ETH의 개발·시장 모멘텀 비교",
+      "3000",
+      "live",
+    );
     const deterministicPlanner = new DemoProcurementPlanner();
     const planner: ProcurementPlanner = {
       plan: (input) => deterministicPlanner.plan(input),
@@ -144,8 +161,97 @@ describe("procurement orchestration", () => {
     );
     expect(view?.events.at(-1)).toMatchObject({
       type: "report.completed",
-      tone: "success",
+      tone: "warning",
     });
+  });
+
+  it("publishes an immediate paid-data preview before the live Gemini report", async () => {
+    vi.stubEnv("SVM_PAY_TO", "4uZJ85RptKhsnVwRnUNsWm5iXwHLysSiyzufR45GeM7P");
+    const run = await createClaimedRun(
+      "SOL과 ETH의 개발·시장 모멘텀 비교",
+      "3000",
+      "live",
+    );
+    const deterministicPlanner = new DemoProcurementPlanner();
+    const geminiBrief: ResearchBrief = {
+      headline: "SOL과 ETH의 시장·개발 모멘텀 비교",
+      executiveSummary:
+        "구매한 시장과 개발 근거를 함께 비교했으며 서로 다른 신호를 구분했습니다.",
+      findings: [
+        {
+          label: "비교 결과",
+          value: "시장·개발 분리",
+          interpretation: "구매한 두 스냅샷만 사용해 비교했습니다.",
+        },
+      ],
+      caveats: ["특정 시점과 저장소에 한정된 결과입니다."],
+      generatedBy: "Gemini 3.5 Flash",
+    };
+    const planner: ProcurementPlanner = {
+      plan: (input) => deterministicPlanner.plan(input),
+      async synthesize() {
+        const preview = await store.getRun(run.id);
+        expect(preview?.status).toBe("running");
+        expect(preview?.reportMode).toBe("preview");
+        expect(preview?.summary?.generatedBy).toBe("REIN 규칙 기반 분석");
+        return geminiBrief;
+      },
+    };
+
+    await executeRun(run.id, {
+      store,
+      planner,
+      gateway: successfulGateway(),
+      catalogLoader: loadFixtureCatalog,
+    });
+
+    const view = await store.getRunView(run.id);
+    expect(view?.run.status).toBe("completed");
+    expect(view?.run.reportMode).toBe("gemini");
+    expect(view?.run.summary).toEqual(geminiBrief);
+    expect(view?.events.map((event) => event.type)).toContain(
+      "report.preview_ready",
+    );
+  });
+
+  it("uses a visible safe selection fallback when live Gemini planning times out", async () => {
+    vi.stubEnv("SVM_PAY_TO", "4uZJ85RptKhsnVwRnUNsWm5iXwHLysSiyzufR45GeM7P");
+    const run = await createClaimedRun(
+      "SOL과 ETH의 개발·시장 모멘텀 비교",
+      "3000",
+      "live",
+    );
+    const deterministicPlanner = new DemoProcurementPlanner();
+    const planner: ProcurementPlanner = {
+      async plan() {
+        throw new ProofBuyError({
+          code: "MODEL_TIMEOUT",
+          message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
+          recovery: "안전 규칙을 사용하세요.",
+        });
+      },
+      synthesize: (input) => deterministicPlanner.synthesize(input),
+    };
+
+    await executeRun(run.id, {
+      store,
+      planner,
+      gateway: successfulGateway(),
+      catalogLoader: loadFixtureCatalog,
+    });
+
+    const view = await store.getRunView(run.id);
+    expect(view?.run.status).toBe("completed");
+    expect(view?.run.selectionMode).toBe("rules");
+    expect(view?.payments).toHaveLength(2);
+    expect(view?.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "selection.fallback",
+          tone: "warning",
+        }),
+      ]),
+    );
   });
 
   it("fails before payment when planning exceeds the model deadline", async () => {

@@ -30,6 +30,7 @@ import { kstDateKey, type NewRunEvent, type ProofBuyStore } from "./storage";
 import type {
   CatalogProduct,
   PaymentRecord,
+  ProcurementPlan,
   PurchasedEvidence,
   ResearchBrief,
   RunRecord,
@@ -69,7 +70,7 @@ function selectedTotal(
     .toString();
 }
 
-function isRecoverableReportFailure(error: unknown): boolean {
+function isRecoverableModelFailure(error: unknown): boolean {
   if (error instanceof ProofBuyError) {
     return error.detail.code === "MODEL_TIMEOUT" || error.detail.code === "MODEL_ERROR";
   }
@@ -152,12 +153,32 @@ export async function executeRun(
       });
     }
 
-    const plan = await planner.plan({
-      goal: run.goal,
-      maxBudgetAtomic: run.maxBudgetAtomic,
-      catalog,
-      signal,
-    });
+    let selectionMode: "gemini" | "rules" = "gemini";
+    let plan: ProcurementPlan;
+    try {
+      plan = await planner.plan({
+        goal: run.goal,
+        maxBudgetAtomic: run.maxBudgetAtomic,
+        catalog,
+        signal,
+      });
+    } catch (error) {
+      if (run.mode !== "live" || !isRecoverableModelFailure(error)) throw error;
+      plan = await new DemoProcurementPlanner().plan({
+        goal: run.goal,
+        maxBudgetAtomic: run.maxBudgetAtomic,
+        catalog,
+      });
+      selectionMode = "rules";
+      await emit(store, run.id, {
+        type: "selection.fallback",
+        tone: "warning",
+        title: "상품 선택을 안전 규칙으로 이어갑니다",
+        detail:
+          "Gemini 응답이 늦어져 고정 카탈로그의 관련성과 예산만으로 평가했습니다.",
+      });
+    }
+    await store.updateRun(run.id, { selectionMode });
     for (const selection of plan.selections) {
       await emit(store, run.id, {
         type: "choice.explained",
@@ -312,17 +333,36 @@ export async function executeRun(
       }
     }
 
+    let fallbackBrief: ResearchBrief | undefined;
+    if (run.mode === "live") {
+      fallbackBrief = await new DemoProcurementPlanner().synthesize({
+        goal: run.goal,
+        evidence,
+      });
+      await store.updateRun(run.id, {
+        summary: fallbackBrief,
+        reportMode: "preview",
+      });
+      await emit(store, run.id, {
+        type: "report.preview_ready",
+        tone: "pending",
+        title: "구매 데이터를 먼저 정리했습니다",
+        detail: "결제와 영수증은 확정됐고 Gemini가 최종 분석을 작성하고 있습니다.",
+      });
+    }
+
     let usedFallbackReport = false;
     let brief: ResearchBrief;
     try {
       brief = await planner.synthesize({ goal: run.goal, evidence, signal });
     } catch (error) {
-      if (!isRecoverableReportFailure(error) || evidence.length === 0) throw error;
-      const fallbackPlanner = new DemoProcurementPlanner();
-      const fallback = await fallbackPlanner.synthesize({
-        goal: run.goal,
-        evidence,
-      });
+      if (run.mode !== "live" || evidence.length === 0) throw error;
+      const fallback =
+        fallbackBrief ??
+        (await new DemoProcurementPlanner().synthesize({
+          goal: run.goal,
+          evidence,
+        }));
       brief = {
         ...fallback,
         caveats: [
@@ -332,9 +372,18 @@ export async function executeRun(
       };
       usedFallbackReport = true;
     }
+    if (run.mode === "live" && brief.generatedBy !== "Gemini 3.5 Flash") {
+      usedFallbackReport = true;
+    }
     await store.updateRun(run.id, {
       status: "completed",
       summary: brief,
+      reportMode:
+        run.mode === "live"
+          ? usedFallbackReport
+            ? "fallback"
+            : "gemini"
+          : undefined,
       reservedAtomic: "0",
       spentAtomic: evidence
         .map((item) => item.receipt.amountAtomic)
@@ -343,8 +392,10 @@ export async function executeRun(
     });
     await emit(store, run.id, {
       type: "report.completed",
-      tone: "success",
-      title: "비교 보고서를 완성했습니다",
+      tone: usedFallbackReport ? "warning" : "success",
+      title: usedFallbackReport
+        ? "결제된 데이터로 결과를 보존했습니다"
+        : "비교 보고서를 완성했습니다",
       detail: usedFallbackReport
         ? `${evidence.length}개 구매 근거를 규칙 기반으로 정리했습니다.`
         : `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,

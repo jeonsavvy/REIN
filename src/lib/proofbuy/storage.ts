@@ -19,6 +19,7 @@ export interface ProofBuyStore {
   createRun(input: NewRunInput): Promise<RunRecord>;
   getRun(runId: string): Promise<RunRecord | undefined>;
   claimRun(runId: string, claimId: string): Promise<boolean>;
+  claimReportRecovery(runId: string): Promise<boolean>;
   updateRun(runId: string, patch: Partial<RunRecord>): Promise<RunRecord>;
   appendEvent(runId: string, event: NewRunEvent): Promise<RunEvent>;
   listEvents(runId: string): Promise<RunEvent[]>;
