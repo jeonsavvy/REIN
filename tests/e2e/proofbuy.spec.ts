@@ -24,7 +24,8 @@ test("runs the two-product demo and renders an explicit simulated receipt", asyn
   page,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /필요한 데이터를 사고/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /목표와 예산만 정하면/ })).toBeVisible();
+  await expect(page.getByText("브라우저 지갑을 연결하지 않습니다.")).toBeVisible();
   await expect(page.getByTestId("mode-badge")).toContainText(
     "데모 · 온체인 전송 없음",
   );

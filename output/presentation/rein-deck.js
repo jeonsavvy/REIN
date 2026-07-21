@@ -12,7 +12,7 @@ pptx.layout = "LAYOUT_WIDE";
 pptx.author = "REIN";
 pptx.company = "REIN";
 pptx.subject = "Google Cloud x Solana AI Agentic Hackathon submission";
-pptx.title = "REIN - Autonomy, held to proof";
+pptx.title = "REIN - Autonomous data procurement on Solana";
 pptx.lang = "ko-KR";
 pptx.theme = {
   headFontFace: "Noto Sans KR",
@@ -191,7 +191,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     fontSize: 28,
     bold: true,
   });
-  text(slide, "AGENT-INITIATED COMMERCE", 0.76, 1.63, 4.4, 0.25, {
+  text(slide, "SOLANA AGENTIC COMMERCE", 0.76, 1.63, 4.4, 0.25, {
     fontFace: MONO,
     fontSize: 9,
     color: C.green,
@@ -204,7 +204,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     breakLine: true,
     valign: "top",
   });
-  text(slide, "목표와 예산을 받으면 데이터를 고르고, 결제한 뒤 근거와 영수증을 남깁니다.", 0.76, 4.18, 7.1, 0.44, {
+  text(slide, "목표와 예산만 정하면, REIN 전용 지갑이 데이터 구매까지 끝냅니다.", 0.76, 4.18, 7.1, 0.44, {
     fontSize: 15,
     color: C.muted,
   });
@@ -246,6 +246,12 @@ function receipt(slide, x, y, label, amount, signature, live) {
     bold: true,
     breakLine: true,
   });
+  text(slide, "POLICY-GATED SERVER WALLET", 9.02, 5.32, 2.8, 0.2, {
+    color: C.mint,
+    fontFace: MONO,
+    fontSize: 7,
+    bold: true,
+  });
   footer(slide);
 }
 
@@ -255,7 +261,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "02 / problem",
-    "데이터를 고르는 모델에게 결제 권한까지 맡길 수는 없습니다.",
+    "모델이 데이터를 골라도, 지갑과 예산은 코드가 통제해야 합니다.",
     "대상: 유료 외부 데이터를 쓰는 리서치·AI 운영팀",
   );
   const risks = [
@@ -319,7 +325,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     ["GOAL", "조사 목표", "목표 + 0.003 USDC"],
     ["SELECT", "상품 선택", "시장 0.001\nGitHub 0.002"],
     ["POLICY", "결제 전 검사", "URL·mint·금액\n상한 확인"],
-    ["PAY", "x402 결제", "Devnet USDC\n거래 2건"],
+    ["PAY", "서버 지갑 결제", "x402 · Devnet USDC\n거래 2건"],
     ["RESULT", "결과 기록", "스냅샷 + 영수증\n+ 데이터 한계"],
   ];
   steps.forEach(([tag, name, detail], i) => {
@@ -412,7 +418,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
 
   const notes = [
     ["01", "구매 순서", "탐색 → 선택 이유 → 정책 → 결제 → 수령을 시간순으로 확인"],
-    ["02", "예산 고정", "지출, 남은 예산, 영수증을 선택 결과 옆에 배치"],
+    ["02", "지갑 역할", "REIN 에이전트 지갑과 데이터 판매자 주소를 영수증에 표시"],
     ["03", "상태별 복구", "denied·unavailable·reconciling·timeout별 복구 안내"],
   ];
   notes.forEach(([n, titleValue, body], i) => {
@@ -450,7 +456,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
   const layers = [
     { x: 0.72, w: 3.26, label: "DECIDE", tone: C.green, title: "Vertex AI + Google ADK", items: ["gemini-3.5-flash", "structured selection", "purchased-evidence synthesis"] },
     { x: 4.34, w: 4.63, label: "CONTROL", tone: C.ink, title: "Next.js policy + Firestore", items: ["fixed catalog / BigInt limits", "transactional reservation", "events · payments · quota"] },
-    { x: 9.33, w: 3.28, label: "SETTLE", tone: C.amber, title: "x402 + Solana Devnet", items: ["buyer + protected seller", "payment-identifier", "Circle test USDC receipt"] },
+    { x: 9.33, w: 3.28, label: "SETTLE", tone: C.amber, title: "x402 + Solana Devnet", items: ["server buyer wallet + seller", "payment-identifier", "Circle test USDC receipt"] },
   ];
   layers.forEach((layer) => {
     box(slide, layer.x, 2.72, layer.w, 2.6, { fill: C.paper, line: layer.tone, width: 1.1 });
@@ -503,7 +509,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     ["ATOMIC", "금액은 BigInt", "6자리 atomic 문자열, 구매 4000 / 실행 10000 / 일일 250000"],
     ["IDEMPOTENCY", "요청별 결제 ID", "같은 payment ID가 다른 요청에 쓰이면 Firestore에서 거부"],
     ["RECONCILE", "자동 재결제 금지", "서명 뒤 상태가 불명확하면 예약을 유지하고 Explorer에서 확인"],
-    ["SECRET", "서버 전용 서명 키", "키는 Cloud Run에만 주입하며 Gemini·브라우저에는 전달하지 않음"],
+    ["SECRET", "에이전트 서버 지갑", "Secret Manager 키로 정책 승인 결제만 서명하며 브라우저 연결은 사용하지 않음"],
     ["INJECTION", "외부 데이터는 비신뢰 입력", "카탈로그와 데이터 속 지시는 무시하고 허용된 숫자 필드만 사용"],
   ];
   safeguards.forEach(([tag, titleValue, body], i) => {
@@ -586,7 +592,9 @@ function receipt(slide, x, y, label, amount, signature, live) {
     breakLine: true,
     valign: "top",
   });
-  text(slide, "지금은 데이터 상품 2개를 다룹니다. 같은 결제 계약을 리서치 API, B2B 데이터, 모델·도구 구매에도 적용할 수 있습니다.", 0.76, 3.75, 7.2, 0.8, { fontSize: 13, color: C.muted, breakLine: true, valign: "top" });
+  text(slide, "SOLANA AGENTIC COMMERCE / SINGLE TRACK", 0.76, 3.54, 4.3, 0.2, { fontFace: MONO, fontSize: 7.5, color: C.green, bold: true });
+  text(slide, "가장 가까운 시작점: B. Autonomous On-chain Settlement", 0.76, 3.82, 7.2, 0.28, { fontSize: 12.5, bold: true });
+  text(slide, "지금은 데이터 상품 2개를 다룹니다. 같은 결제 계약을 유료 리서치 API, B2B 데이터, 모델·도구 구매에도 적용할 수 있습니다.", 0.76, 4.28, 7.2, 0.72, { fontSize: 12, color: C.muted, breakLine: true, valign: "top" });
 
   box(slide, 8.78, 1.55, 3.62, 4.44, { fill: C.ink, line: C.ink });
   text(slide, "SUBMISSION", 9.12, 1.91, 2.8, 0.2, { fontFace: MONO, fontSize: 8, color: C.mint, bold: true });
@@ -599,8 +607,8 @@ function receipt(slide, x, y, label, amount, signature, live) {
   text(slide, "Video demo", 9.12, 4.95, 2.5, 0.24, { fontSize: 13, color: C.white, bold: true });
   text(slide, "≤ 3 min · captions included", 9.12, 5.3, 2.75, 0.23, { fontFace: MONO, fontSize: 7.2, color: C.mint });
 
-  text(slide, "Autonomy, held to proof.", 0.76, 5.68, 7.4, 0.42, { fontSize: 18, color: C.green, bold: true });
-  footer(slide, "REIN / AGENT-INITIATED COMMERCE");
+  text(slide, "사람은 한도를 정하고, 에이전트는 결제를 끝냅니다.", 0.76, 5.68, 7.4, 0.42, { fontSize: 18, color: C.green, bold: true });
+  footer(slide, "REIN / SOLANA AGENTIC COMMERCE");
 }
 
 for (const slide of pptx._slides) {

@@ -178,7 +178,7 @@ function phaseState(
       title: "결제 및 수령",
       description:
         mode === "live"
-          ? "테스트 USDC로 결제하고 고정된 데이터를 받습니다."
+          ? "REIN 전용 Devnet 지갑이 자동 서명하고 고정된 데이터를 받습니다."
           : "결제 과정을 시뮬레이션하고 고정된 데이터를 받습니다.",
       state: paymentState,
     },
@@ -449,22 +449,22 @@ export function ReinDashboard() {
       </header>
 
       <section className="intro-band" aria-labelledby="page-title">
-        <p className="product-label">예산을 지키는 AI 데이터 구매 에이전트</p>
+        <p className="product-label">정책과 예산 안에서 직접 결제하는 AI 데이터 조달</p>
         <h1 id="page-title">
-          필요한 데이터를 사고,
+          목표와 예산만 정하면,
           <br />
-          <em>결제 근거까지 남깁니다.</em>
+          <em>데이터 구매까지 끝냅니다.</em>
         </h1>
         <div className="intro-support">
           <p>
-            비교할 주제와 최대 예산을 정하면 REIN이 데이터 상품을 고르고, 정책을
-            통과한 결제만 실행합니다. 보고서에는 선택 이유와 Solana 영수증이 함께
-            남습니다.
+            사용자는 조사 목표와 지출 상한만 정합니다. Gemini가 살 데이터를 고르면
+            정책 엔진이 가격·자산·수취 주소를 검사하고, REIN 전용 지갑이 허용된
+            결제를 자동으로 서명합니다.
           </p>
-          <ul aria-label="결제 제한">
-            <li>상품 2개 고정</li>
-            <li>예산·자산 코드 검증</li>
-            <li>Solana Devnet 영수증</li>
+          <ul aria-label="자율 결제 방식">
+            <li>실행 후 추가 승인 없음</li>
+            <li>정책 검사 후 서버 지갑 서명</li>
+            <li>Solana Devnet 실제 영수증</li>
           </ul>
         </div>
       </section>
@@ -517,7 +517,7 @@ export function ReinDashboard() {
               <span>USDC</span>
             </div>
             <p id="budget-help" className={`field-help ${budgetError ? "error" : ""}`}>
-              {budgetError ?? "예산은 Circle Devnet USDC 기준입니다."}
+              {budgetError ?? "Circle Devnet 테스트 USDC만 사용합니다. Mainnet 자산은 쓰지 않습니다."}
             </p>
 
             <div className="budget-presets" aria-label="예산 빠른 선택">
@@ -608,9 +608,10 @@ export function ReinDashboard() {
           </form>
 
           <div className="safety-note">
-            <strong>결제 키는 서버의 정책 엔진만 사용합니다.</strong>
+            <strong>브라우저 지갑을 연결하지 않습니다.</strong>
             <p>
-              Gemini는 고정 카탈로그 밖의 URL·가격·네트워크·자산을 선택할 수 없습니다.
+              REIN 전용 Devnet 지갑은 서버 정책이 허용한 결제만 서명합니다. Gemini와
+              브라우저는 결제 키를 볼 수 없습니다.
             </p>
           </div>
         </aside>
@@ -671,7 +672,7 @@ export function ReinDashboard() {
             <div className="run-intro">
               <p>
                 {lastEvent?.detail ??
-                  "구매 전에 상품·가격·선택 이유와 정책 검사 결과를 확인합니다."}
+                  "실행하면 추가 승인 없이 상품 선택, 정책 검사, 서버 지갑 결제, 보고서 작성까지 이어집니다."}
               </p>
               <div className="budget-summary">
                 <div>
@@ -792,11 +793,11 @@ export function ReinDashboard() {
                 </div>
                 <dl>
                   <div>
-                    <dt>보낸 주소</dt>
+                    <dt>{receipt.mode === "live" ? "REIN 에이전트 지갑" : "데모 구매자"}</dt>
                     <dd>{shorten(receipt.payer, 12, 9)}</dd>
                   </div>
                   <div>
-                    <dt>받는 주소</dt>
+                    <dt>{receipt.mode === "live" ? "데이터 판매자" : "데모 판매자"}</dt>
                     <dd>{shorten(receipt.payee, 12, 9)}</dd>
                   </div>
                 </dl>
@@ -866,7 +867,7 @@ export function ReinDashboard() {
       )}
 
       <footer className="footer">
-        <span>REIN · Autonomy, held to proof.</span>
+        <span>REIN · 사람은 한도를 정하고, 에이전트는 결제를 끝냅니다.</span>
         <span>Gemini 3.5 Flash · x402 · Solana Devnet · Cloud Run</span>
       </footer>
     </main>

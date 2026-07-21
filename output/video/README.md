@@ -6,7 +6,7 @@
 - 영상에 번인한 한국어 자막과 별도 `edit/captions-ko.srt`
 - Qwen3-TTS 0.6B CustomVoice의 공식 한국어 화자 `Sohee`
 - 개인 음성 샘플과 음성 복제는 사용하지 않음
-- SHA-256: `96ADFE4BFE0D84DB8177BC8C57014DE26F3B65CD8229E4D2D677CF065A0C1753`
+- SHA-256: `F9979F38A87BA05D0EC861431D323120044150BBD7E6247731426BD5EE450F55`
 
 실행 버튼부터 보고서 완료, 두 Solana Explorer 거래 확인까지 하나의 Cloud Run
 실행을 시간순으로 담았다. 원본 실행 구간은 연속이며, 추가 편집은 앞뒤 REIN 카드,
@@ -30,8 +30,8 @@
 내레이션은 [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)의
 `Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice`를 CPU에서 실행해 만들었다. 모델,
 revision, 화자, 라이선스와 각 WAV의 해시는 `edit/narration-manifest.json`에
-고정했다. `faster-whisper-small` 역전사 검사는 문장별 평균 0.972, 최종 믹스
-0.961의 정규화 유사도를 기록했다. 이는 발화 식별 가능성을 점검하는 자동 검사일
+고정했다. `faster-whisper-small` 역전사 검사는 문장별 평균 0.961, 최종 믹스
+0.970의 정규화 유사도를 기록했다. 이는 발화 식별 가능성을 점검하는 자동 검사일
 뿐, 주관적인 음질 평가를 대신하지 않는다.
 
 ## 다시 만들기

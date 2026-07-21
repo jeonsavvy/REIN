@@ -23,19 +23,25 @@
 
 ## 프로젝트명
 
-REIN — 예산을 지키는 AI 데이터 구매 에이전트
+REIN — 목표와 예산만 받는 자율 데이터 조달 에이전트
 
 ## 한 줄 소개
 
-목표와 예산을 받으면 Gemini가 필요한 데이터를 선택하고, 정책 검사를 통과한
-구매만 Solana Devnet에서 결제합니다. 결과에는 온체인 영수증과 근거 보고서가
-함께 남습니다.
+사용자는 목표와 예산만 정합니다. Gemini가 살 데이터를 고르면 정책 엔진이 검사하고,
+REIN 전용 서버 지갑이 Solana Devnet에서 자동으로 서명·결제합니다. 결과에는 온체인
+영수증과 근거 보고서가 함께 남습니다.
+
+## 공모 주제 분류
+
+공식 행사는 Solana 기반 Agentic Commerce 단일 트랙입니다. A~D 가운데 굳이 가장
+가까운 시작점을 고르면 **B. Autonomous On-chain Settlement**입니다. 데이터 상품을
+에이전트가 직접 선택해 구매한다는 사용 사례는 A와도 겹칩니다.
 
 ## 타깃 사용자
 
 외부 데이터 비용을 통제하면서 반복 조사를 자동화하려는 리서처, AI 운영자,
-B2B SaaS 팀. SOL/ETH 시장·개발 모멘텀 비교를 통해 데이터 선택, 결제, 영수증
-기록까지 이어지는 흐름을 시연합니다.
+B2B SaaS 팀. SOL/ETH 시장·개발 모멘텀 비교를 통해 목표와 예산만 받은 에이전트가
+데이터 선택, 서버 지갑 결제, 영수증 기록까지 끝내는 흐름을 시연합니다.
 
 ## 해결 문제
 
@@ -55,6 +61,7 @@ USDC mint, 가격, payee, 실행·일일 한도를 재검증하고 Firestore 트
 
 - Vertex AI `gemini-3.5-flash`, Google ADK TypeScript, structured output
 - Cloud Run 단일 서비스, Firestore transactional quota, Secret Manager key
+- 브라우저 지갑 연결 없이 REIN Devnet 서버 지갑이 정책 승인 결제만 서명
 - Gemini에는 결제 키를 전달하지 않고 관련성·가격·선택 이유만 구조화해 받음
 
 ## Solana / 결제 활용

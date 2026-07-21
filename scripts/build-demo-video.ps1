@@ -109,9 +109,9 @@ try {
   $captionFilter = "subtitles=output/video/edit/captions-ko.srt:force_style='FontName=Noto Sans KR,FontSize=16,PrimaryColour=&H00FFFFFF,BackColour=&H900B1511,BorderStyle=3,Outline=5,Shadow=0,MarginV=32,Alignment=2'"
   $fontForFfmpeg = $captionFont.Replace("\", "/").Replace(":", "\:")
   $copyOverlayFilter = "drawbox=x=250:y=458:w=500:h=28:color=0xF3F0E7:t=fill:enable='between(t,$introDuration,$copyOverlayPause)'," +
-    "drawtext=fontfile='$fontForFfmpeg':text='예산은 Circle Devnet USDC 기준입니다.':fontcolor=0x59665F:fontsize=13:x=256:y=465:enable='between(t,$introDuration,$copyOverlayPause)'," +
+    "drawtext=fontfile='$fontForFfmpeg':text='Circle Devnet 테스트 USDC만 사용합니다. Mainnet 자산은 쓰지 않습니다.':fontcolor=0x59665F:fontsize=13:x=256:y=465:enable='between(t,$introDuration,$copyOverlayPause)'," +
     "drawbox=x=250:y=572:w=500:h=30:color=0xF3F0E7:t=fill:enable='between(t,$copyOverlayResume,$copyOverlayEnd)'," +
-    "drawtext=fontfile='$fontForFfmpeg':text='예산은 Circle Devnet USDC 기준입니다.':fontcolor=0x59665F:fontsize=13:x=256:y=579:enable='between(t,$copyOverlayResume,$copyOverlayEnd)'"
+    "drawtext=fontfile='$fontForFfmpeg':text='Circle Devnet 테스트 USDC만 사용합니다. Mainnet 자산은 쓰지 않습니다.':fontcolor=0x59665F:fontsize=13:x=256:y=579:enable='between(t,$copyOverlayResume,$copyOverlayEnd)'"
   $sourceRelative = ([System.IO.Path]::GetRelativePath($repoRoot, $sourceVideo)).Replace("\", "/")
   $videoFilter = "[0:v]trim=start=$trimStart,setpts=PTS-STARTPTS,fps=30,scale=1920:1080:flags=lanczos,setsar=1,format=yuv420p[live];" +
     "[1:v]fps=30,scale=1920:1080:flags=lanczos,setsar=1,format=yuv420p,split=2[cardA][cardB];" +
@@ -127,7 +127,7 @@ try {
     -map "[outv]" -map "2:a:0" -t $finalDuration `
     -c:v libx264 -preset medium -crf 18 -profile:v high -level 4.2 `
     -c:a aac -b:a 192k -ar 48000 `
-    -metadata title="REIN - 필요한 데이터만 사고, 결제마다 근거를 남깁니다" `
+    -metadata title="REIN - 사람은 한도를 정하고, 에이전트는 결제를 끝냅니다" `
     -metadata comment="AI-generated narration with Qwen3-TTS Sohee; no voice cloning; public Solana Devnet proof" `
     -movflags +faststart $output
   if ($LASTEXITCODE -ne 0) { throw "Video render failed" }

@@ -6,8 +6,12 @@
 
 REIN은 조사 목표와 예산을 기준으로 데이터 구매를 맡기는 제품이다. 사용자가 조사
 목표와 최대 예산을 정하면 Gemini 3.5 Flash가 허용된 데이터 상품을 비교하고,
-결정론적 정책을 통과한 구매만 Solana Devnet 테스트 USDC로 결제한다. 결과에는
-구매한 근거와 온체인 영수증이 함께 남는다.
+결정론적 정책을 통과한 구매만 REIN 전용 서버 지갑이 Solana Devnet 테스트
+USDC로 자동 결제한다. 결과에는 구매한 근거와 온체인 영수증이 함께 남는다.
+
+공식 공모 주제는 Solana 기반 Agentic Commerce 단일 트랙이다. REIN은 데이터
+구매라는 면에서 Agent-Initiated Commerce와 겹치지만, 정책·예산 안에서 에이전트
+지갑이 직접 서명·결제한다는 핵심은 Autonomous On-chain Settlement에 가장 가깝다.
 
 ## 사용자와 해야 할 일
 
