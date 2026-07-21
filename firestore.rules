@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // REIN has no browser-side Firestore client. Cloud Run uses its service
+    // account through the Admin SDK, which is not governed by these rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

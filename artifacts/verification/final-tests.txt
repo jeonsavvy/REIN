@@ -1,0 +1,67 @@
+REIN final verification 2026-07-21T20:31:56.0963588+09:00
+
+=== pnpm lint ===
+$ eslint .
+
+=== pnpm typecheck ===
+$ tsc --noEmit
+
+=== pnpm test ===
+$ vitest run
+
+ RUN  v4.1.0 C:/PROJECT/구글 클라우드 X 솔라나 AI Agentic 해커톤 지원
+
+
+ Test Files  9 passed (9)
+      Tests  48 passed (48)
+   Start at  20:32:13
+   Duration  2.51s (transform 1.05s, setup 0ms, import 3.99s, tests 140ms, environment 1ms)
+
+
+=== pnpm build ===
+$ next build
+▲ Next.js 16.2.10 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.9s
+  Running TypeScript ...
+  Finished TypeScript in 7.0s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/3) ...
+✓ Generating static pages using 11 workers (3/3) in 805ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/catalog
+├ ƒ /api/health
+├ ƒ /api/products/github-health
+├ ƒ /api/products/market-snapshot
+├ ƒ /api/runs
+├ ƒ /api/runs/[id]
+└ ƒ /api/runs/[id]/events
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+=== pnpm test:e2e ===
+$ playwright test
+[WebServer] $ node scripts/start-standalone.mjs
+
+Running 8 tests using 2 workers
+
+  ok 1 [mobile] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.8s)
+  ok 2 [desktop] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.8s)
+  ok 4 [desktop] › tests\e2e\proofbuy.spec.ts:57:5 › shows a policy denial without attempting payment (1.6s)
+  ok 3 [mobile] › tests\e2e\proofbuy.spec.ts:57:5 › shows a policy denial without attempting payment (1.6s)
+  ok 5 [desktop] › tests\e2e\proofbuy.spec.ts:67:5 › protects paid resources with a 402 challenge and rejects unknown proof (31ms)
+  ok 6 [mobile] › tests\e2e\proofbuy.spec.ts:67:5 › protects paid resources with a 402 challenge and rejects unknown proof (28ms)
+  ok 7 [desktop] › tests\e2e\proofbuy.spec.ts:92:5 › replays persisted SSE events after a client reconnect (567ms)
+  ok 8 [mobile] › tests\e2e\proofbuy.spec.ts:92:5 › replays persisted SSE events after a client reconnect (633ms)
+
+  8 passed (8.6s)
+
+ALL REQUIRED CHECKS PASSED

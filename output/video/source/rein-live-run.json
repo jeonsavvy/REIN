@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-07-21T11:11:16.110Z",
+  "target": "https://rein-vvwpcipqca-du.a.run.app",
+  "clicked": true,
+  "runId": "run_7e8bcc6762404d8fa7ac7b1afc592201",
+  "terminalStatus": "completed",
+  "explorerUrls": [
+    "https://explorer.solana.com/tx/cJW9o6c4X5Wh8YkXDBySbYdBb7y2BLdtrSc7A6qt6JDTQaTabqDDaekyfqCYUSbtAkJD8Sq3MTQUcvviRGxMMHm?cluster=devnet",
+    "https://explorer.solana.com/tx/2zpggYuHJ7Z5KCbg4iXqeTryhcevA5mqmHx1G57BZ8U73XxgaRQho2bgmg6rXnrzNBJhCBGoEn7QstGrLqXUAeeQ?cluster=devnet"
+  ],
+  "failure": null
+}

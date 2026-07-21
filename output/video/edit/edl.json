@@ -1,0 +1,32 @@
+{
+  "source": "../source/rein-live-run.webm",
+  "sourceDurationSeconds": 94.96,
+  "edits": [
+    {
+      "in": 0,
+      "out": 4.5,
+      "operation": "replace_loading_blank_with_still",
+      "source": "../../../artifacts/deck-render-rein/slide-1.png",
+      "note": "The browser had not painted yet; no run or payment activity existed"
+    },
+    {
+      "in": 4.5,
+      "out": 94.96,
+      "operation": "preserve",
+      "note": "One uninterrupted live Cloud Run purchase and Explorer proof sequence"
+    },
+    {
+      "in": 94.96,
+      "out": 100.5,
+      "operation": "append_still",
+      "source": "../../../artifacts/deck-render-rein/slide-1.png",
+      "note": "REIN closing card"
+    }
+  ],
+  "overlays": [
+    "Korean authored captions",
+    "Local Microsoft Heami synthetic narration",
+    "Synthetic-voice disclosure on closing card"
+  ],
+  "settlementEdits": "none; only the pre-navigation blank frame is replaced"
+}

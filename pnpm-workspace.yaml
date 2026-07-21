@@ -1,0 +1,14 @@
+allowBuilds:
+  '@firebase/util': true
+  '@google/genai': true
+  bufferutil: false
+  keccak: false
+  protobufjs: true
+  sharp: true
+  sqlite3: false
+  unrs-resolver: true
+  utf-8-validate: false
+minimumReleaseAgeExclude:
+  - '@google/adk@1.4.0'
+overrides:
+  '@solana/sysvars': 5.5.1
