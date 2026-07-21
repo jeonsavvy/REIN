@@ -19,7 +19,11 @@ import {
   productRouteFor,
   type PaymentGateway,
 } from "./payment";
-import { getPlanner, type ProcurementPlanner } from "./planner";
+import {
+  DemoProcurementPlanner,
+  getPlanner,
+  type ProcurementPlanner,
+} from "./planner";
 import { validatePaymentCandidate, validatePlannerSelection } from "./policy";
 import { getStore } from "./store";
 import { kstDateKey, type NewRunEvent, type ProofBuyStore } from "./storage";
@@ -27,6 +31,7 @@ import type {
   CatalogProduct,
   PaymentRecord,
   PurchasedEvidence,
+  ResearchBrief,
   RunRecord,
 } from "./types";
 
@@ -62,6 +67,16 @@ function selectedTotal(
       0n,
     )
     .toString();
+}
+
+function isRecoverableReportFailure(error: unknown): boolean {
+  if (error instanceof ProofBuyError) {
+    return error.detail.code === "MODEL_TIMEOUT" || error.detail.code === "MODEL_ERROR";
+  }
+  return (
+    error instanceof Error &&
+    (error.name === "AbortError" || error.name === "TimeoutError")
+  );
 }
 
 async function markFailure(
@@ -297,7 +312,26 @@ export async function executeRun(
       }
     }
 
-    const brief = await planner.synthesize({ goal: run.goal, evidence, signal });
+    let usedFallbackReport = false;
+    let brief: ResearchBrief;
+    try {
+      brief = await planner.synthesize({ goal: run.goal, evidence, signal });
+    } catch (error) {
+      if (!isRecoverableReportFailure(error) || evidence.length === 0) throw error;
+      const fallbackPlanner = new DemoProcurementPlanner();
+      const fallback = await fallbackPlanner.synthesize({
+        goal: run.goal,
+        evidence,
+      });
+      brief = {
+        ...fallback,
+        caveats: [
+          ...fallback.caveats,
+          "Gemini 응답이 늦어져 결제된 데이터는 REIN의 규칙 기반 분석으로 정리했습니다.",
+        ],
+      };
+      usedFallbackReport = true;
+    }
     await store.updateRun(run.id, {
       status: "completed",
       summary: brief,
@@ -311,7 +345,9 @@ export async function executeRun(
       type: "report.completed",
       tone: "success",
       title: "비교 보고서를 완성했습니다",
-      detail: `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,
+      detail: usedFallbackReport
+        ? `${evidence.length}개 구매 근거를 규칙 기반으로 정리했습니다.`
+        : `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,
     });
   } catch (error) {
     await markFailure(store, run, error);

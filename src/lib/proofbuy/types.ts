@@ -178,7 +178,7 @@ export interface ResearchBrief {
     interpretation: string;
   }>;
   caveats: string[];
-  generatedBy: "Gemini 3.5 Flash" | "Deterministic demo planner";
+  generatedBy: "Gemini 3.5 Flash" | "REIN 규칙 기반 분석";
 }
 
 export interface RunError {

@@ -58,6 +58,8 @@ Cloud Run live mode uses Firestore transactions.
 - Upstream failure makes only that product unavailable.
 - A known failed payment releases reservation and records `failed`.
 - Timeout after payment submission records `reconciling`; it is not retried.
+- A report-only model timeout after settled payments falls back to a deterministic
+  report over the already purchased evidence and never starts another payment.
 - SSE reconnect replays stored events and does not claim a running/completed run.
 
 ## Verification

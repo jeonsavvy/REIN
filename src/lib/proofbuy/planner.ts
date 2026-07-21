@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { formatUsdcAtomic, parseAtomic } from "./amount";
-import { PRODUCT_DEFINITIONS } from "./constants";
+import {
+  MODEL_PLAN_TIMEOUT_MS,
+  MODEL_REPORT_TIMEOUT_MS,
+  PRODUCT_DEFINITIONS,
+} from "./constants";
 import { ProofBuyError } from "./errors";
 import type {
   CatalogProduct,
@@ -176,17 +180,38 @@ export class DemoProcurementPlanner implements ProcurementPlanner {
         "GitHub 지표는 선택한 핵심 저장소만 반영하며 전체 생태계를 대표하지 않습니다.",
         "GitHub 최근 커밋은 저장소당 최대 100건까지 집계하며 상한 도달 여부를 함께 전달합니다.",
       ],
-      generatedBy: "Deterministic demo planner",
+      generatedBy: "REIN 규칙 기반 분석",
     };
   }
 }
 
+function modelTimeoutError(): ProofBuyError {
+  return new ProofBuyError({
+    code: "MODEL_TIMEOUT",
+    message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
+    recovery: "결제 전이라면 잠시 후 다시 실행하세요.",
+  });
+}
+
+function modelResponseError(): ProofBuyError {
+  return new ProofBuyError({
+    code: "MODEL_ERROR",
+    message: "Gemini 응답 형식을 확인할 수 없습니다.",
+    recovery: "결제 전이라면 잠시 후 다시 실행하세요.",
+  });
+}
+
 function parseStructuredJson<T>(raw: string, schema: z.ZodType<T>): T {
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("Gemini returned no JSON object");
-  return schema.parse(JSON.parse(cleaned.slice(start, end + 1)));
+  try {
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start < 0 || end <= start) throw modelResponseError();
+    return schema.parse(JSON.parse(cleaned.slice(start, end + 1)));
+  } catch (error) {
+    if (error instanceof ProofBuyError) throw error;
+    throw modelResponseError();
+  }
 }
 
 async function runAdkStructured<T>(input: {
@@ -194,6 +219,8 @@ async function runAdkStructured<T>(input: {
   instruction: string;
   payload: unknown;
   schema: z.ZodType<T>;
+  maxOutputTokens: number;
+  timeoutMs: number;
   signal?: AbortSignal;
 }): Promise<T> {
   const project = process.env.GOOGLE_CLOUD_PROJECT;
@@ -204,53 +231,71 @@ async function runAdkStructured<T>(input: {
       recovery: "서비스 상태를 확인한 뒤 다시 실행하세요.",
     });
   }
-  const { Gemini, InMemoryRunner, LlmAgent } =
-    await import("@google/adk");
-  const model = new Gemini({
-    model: "gemini-3.5-flash",
-    vertexai: true,
-    project,
-    location: process.env.GOOGLE_CLOUD_LOCATION ?? "global",
-  });
-  const agent = new LlmAgent({
-    name: input.agentName,
-    description: "Bounded procurement reasoning for REIN",
-    model,
-    instruction: input.instruction,
-    includeContents: "none",
-    outputSchema: input.schema as never,
-    beforeModelCallback: ({ request }) => {
-      request.config ??= {};
-      request.config.thinkingConfig = {
-        thinkingLevel: "HIGH" as never,
-        includeThoughts: false,
-      };
-      return undefined;
-    },
-  });
-  const runner = new InMemoryRunner({ agent, appName: "proofbuy" });
-  const session = await runner.sessionService.createSession({
-    appName: runner.appName,
-    userId: "proofbuy-runtime",
-  });
-  let finalText = "";
-  for await (const event of runner.runAsync({
-    userId: "proofbuy-runtime",
-    sessionId: session.id,
-    newMessage: {
-      role: "user",
-      parts: [{ text: JSON.stringify(input.payload) }],
-    },
-    abortSignal: input.signal,
-  })) {
-    const text =
-      event.content?.parts
-        ?.filter((part) => !("thought" in part && part.thought))
-        .map((part) => ("text" in part ? part.text ?? "" : ""))
-        .join("") ?? "";
-    if (text.trim()) finalText = text;
+  const timeout = AbortSignal.timeout(input.timeoutMs);
+  const signal = input.signal ? AbortSignal.any([input.signal, timeout]) : timeout;
+  try {
+    const { Gemini, InMemoryRunner, LlmAgent } = await import("@google/adk");
+    const model = new Gemini({
+      model: "gemini-3.5-flash",
+      vertexai: true,
+      project,
+      location: process.env.GOOGLE_CLOUD_LOCATION ?? "global",
+    });
+    const agent = new LlmAgent({
+      name: input.agentName,
+      description: "Bounded procurement reasoning for REIN",
+      model,
+      instruction: input.instruction,
+      includeContents: "none",
+      outputSchema: input.schema as never,
+      disallowTransferToParent: true,
+      disallowTransferToPeers: true,
+      beforeModelCallback: ({ request }) => {
+        request.config ??= {};
+        request.config.maxOutputTokens = input.maxOutputTokens;
+        request.config.temperature = 0.2;
+        request.config.thinkingConfig = {
+          thinkingLevel: "LOW" as never,
+          includeThoughts: false,
+        };
+        return undefined;
+      },
+    });
+    const runner = new InMemoryRunner({ agent, appName: "proofbuy" });
+    const session = await runner.sessionService.createSession({
+      appName: runner.appName,
+      userId: "proofbuy-runtime",
+    });
+    let finalText = "";
+    for await (const event of runner.runAsync({
+      userId: "proofbuy-runtime",
+      sessionId: session.id,
+      newMessage: {
+        role: "user",
+        parts: [{ text: JSON.stringify(input.payload) }],
+      },
+      abortSignal: signal,
+    })) {
+      const text =
+        event.content?.parts
+          ?.filter((part) => !("thought" in part && part.thought))
+          .map((part) => ("text" in part ? part.text ?? "" : ""))
+          .join("") ?? "";
+      if (text.trim()) finalText = text;
+    }
+    if (signal.aborted) throw modelTimeoutError();
+    return parseStructuredJson(finalText, input.schema);
+  } catch (error) {
+    if (error instanceof ProofBuyError) throw error;
+    if (
+      signal.aborted ||
+      (error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError"))
+    ) {
+      throw modelTimeoutError();
+    }
+    throw modelResponseError();
   }
-  return parseStructuredJson(finalText, input.schema);
 }
 
 export class VertexAdkProcurementPlanner implements ProcurementPlanner {
@@ -283,6 +328,8 @@ export class VertexAdkProcurementPlanner implements ProcurementPlanner {
         })),
       },
       schema: planSchema,
+      maxOutputTokens: 512,
+      timeoutMs: MODEL_PLAN_TIMEOUT_MS,
       signal: input.signal,
     });
   }
@@ -314,6 +361,8 @@ export class VertexAdkProcurementPlanner implements ProcurementPlanner {
         })),
       },
       schema: briefSchema,
+      maxOutputTokens: 1_400,
+      timeoutMs: MODEL_REPORT_TIMEOUT_MS,
       signal: input.signal,
     });
   }

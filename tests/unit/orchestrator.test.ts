@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
 import { executeRun } from "@/lib/proofbuy/orchestrator";
 import { ProofBuyError } from "@/lib/proofbuy/errors";
-import { DemoProcurementPlanner } from "@/lib/proofbuy/planner";
+import {
+  DemoProcurementPlanner,
+  type ProcurementPlanner,
+} from "@/lib/proofbuy/planner";
 import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
 import type { PaymentGateway } from "@/lib/proofbuy/payment";
 import type { PaymentReceipt } from "@/lib/proofbuy/types";
@@ -106,6 +109,71 @@ describe("procurement orchestration", () => {
     expect(view?.run.status).toBe("failed");
     expect(view?.run.reservedAtomic).toBe("0");
     expect(view?.payments[0]?.status).toBe("failed");
+  });
+
+  it("completes from purchased evidence when report generation times out", async () => {
+    const run = await createClaimedRun("SOL과 ETH의 개발·시장 모멘텀 비교");
+    const deterministicPlanner = new DemoProcurementPlanner();
+    const planner: ProcurementPlanner = {
+      plan: (input) => deterministicPlanner.plan(input),
+      async synthesize() {
+        throw new ProofBuyError({
+          code: "MODEL_TIMEOUT",
+          message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
+          recovery: "잠시 후 다시 실행하세요.",
+        });
+      },
+    };
+    const gateway = successfulGateway();
+    const purchase = vi.fn(gateway.purchase);
+
+    await executeRun(run.id, {
+      store,
+      planner,
+      gateway: { purchase },
+      catalogLoader: loadFixtureCatalog,
+    });
+
+    const view = await store.getRunView(run.id);
+    expect(purchase).toHaveBeenCalledTimes(2);
+    expect(view?.run.status).toBe("completed");
+    expect(view?.run.spentAtomic).toBe("3000");
+    expect(view?.run.summary?.generatedBy).toBe("REIN 규칙 기반 분석");
+    expect(view?.run.summary?.caveats).toContain(
+      "Gemini 응답이 늦어져 결제된 데이터는 REIN의 규칙 기반 분석으로 정리했습니다.",
+    );
+    expect(view?.events.at(-1)).toMatchObject({
+      type: "report.completed",
+      tone: "success",
+    });
+  });
+
+  it("fails before payment when planning exceeds the model deadline", async () => {
+    const run = await createClaimedRun("SOL과 ETH의 개발·시장 모멘텀 비교");
+    const purchase = vi.fn(successfulGateway().purchase);
+    const planner: ProcurementPlanner = {
+      async plan() {
+        throw new ProofBuyError({
+          code: "MODEL_TIMEOUT",
+          message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
+          recovery: "잠시 후 다시 실행하세요.",
+        });
+      },
+      synthesize: vi.fn(),
+    };
+
+    await executeRun(run.id, {
+      store,
+      planner,
+      gateway: { purchase },
+      catalogLoader: loadFixtureCatalog,
+    });
+
+    const view = await store.getRunView(run.id);
+    expect(purchase).not.toHaveBeenCalled();
+    expect(view?.payments).toEqual([]);
+    expect(view?.run.status).toBe("failed");
+    expect(view?.run.error?.code).toBe("MODEL_TIMEOUT");
   });
 
   it("surfaces upstream outage before any payment reservation", async () => {
