@@ -94,13 +94,13 @@ describe("report-only recovery", () => {
     ]);
   });
 
-  it("repairs a paid model failure from existing evidence", async () => {
+  it("repairs a legacy paid failure from existing settled evidence", async () => {
     const { run } = await paidLiveRun();
     await store.updateRun(run.id, {
       status: "failed",
       error: {
-        code: "MODEL_TIMEOUT",
-        message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
+        code: "INTERNAL_ERROR",
+        message: "Gemini returned no JSON object",
         recovery: "분석만 다시 시도하세요.",
       },
     });

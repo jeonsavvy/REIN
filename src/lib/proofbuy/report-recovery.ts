@@ -7,8 +7,6 @@ import { getStore } from "./store";
 import type { ProofBuyStore } from "./storage";
 import type { RunRecord, RunView } from "./types";
 
-const RECOVERABLE_MODEL_ERRORS = new Set(["MODEL_TIMEOUT", "MODEL_ERROR"]);
-
 export class ReportRecoveryUnavailableError extends Error {
   constructor(message: string) {
     super(message);
@@ -29,10 +27,10 @@ function isRecoveryCandidate(run: RunRecord): boolean {
   ) {
     return true;
   }
-  return (
-    run.status === "failed" &&
-    Boolean(run.error && RECOVERABLE_MODEL_ERRORS.has(run.error.code))
-  );
+  // Older revisions stored some post-payment model failures as INTERNAL_ERROR.
+  // Eligibility is therefore decided by the settled-evidence invariant below,
+  // not by a mutable error-code taxonomy.
+  return run.status === "failed";
 }
 
 function assertSettledEvidence(view: RunView): void {

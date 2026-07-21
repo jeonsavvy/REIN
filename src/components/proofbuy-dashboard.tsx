@@ -491,6 +491,18 @@ export function ReinDashboard() {
     .toString();
   const runError = view?.run.error;
   const reportAttempts = view?.run.reportRecoveryAttempts ?? 0;
+  const settledPaymentIds = new Set(
+    view?.payments
+      .filter((payment) => payment.status === "settled")
+      .map((payment) => payment.id) ?? [],
+  );
+  const hasRecoverablePaidEvidence = Boolean(
+    view?.evidence.length &&
+      view.run.reservedAtomic === "0" &&
+      view.payments.length > 0 &&
+      view.payments.every((payment) => payment.status === "settled") &&
+      view.evidence.every((item) => settledPaymentIds.has(item.receipt.paymentId)),
+  );
   const canRetryReport = Boolean(
     runId &&
       mode === "live" &&
@@ -498,9 +510,7 @@ export function ReinDashboard() {
       view?.run.reportRecoveryState !== "running" &&
       view?.run.reportRecoveryState !== "succeeded" &&
       (usedFallbackReport ||
-        (status === "failed" &&
-          view?.evidence.length &&
-          (runError?.code === "MODEL_TIMEOUT" || runError?.code === "MODEL_ERROR"))),
+        (status === "failed" && hasRecoverablePaidEvidence)),
   );
   const runUrl = runId && typeof window !== "undefined" ? window.location.href : undefined;
 
