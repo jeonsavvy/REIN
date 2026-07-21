@@ -67,13 +67,14 @@ USDC mint, 가격, payee, 실행·일일 한도를 재검증하고 Firestore 트
 
 - GitHub: `https://github.com/jeonsavvy/REIN`
 - 소개서 PDF: `[Drive 공개 링크]`
-- 데모 영상(3분 이내): `[YouTube URL — 1분 40초 최종본 업로드 후 입력]`
+- 데모 영상(3분 이내): `[YouTube URL — 2분 23초 최종본 업로드 후 입력]`
 - 라이브 Cloud Run: `https://rein-vvwpcipqca-du.a.run.app`
-- Explorer 1: `https://explorer.solana.com/tx/2NuicT57mQD1Uu5yumPnubCkrdSVHQUegbxLEBsDtpdVTTjw5dTdyB3QpH9t7VZLGnyQyNV9DySA9xWMY9YMpArw?cluster=devnet`
-- Explorer 2: `https://explorer.solana.com/tx/3vpyu3DsDvDT2m71kj3Pt5GQ4Ba2jQVYkuFhWL9eTUgiVXwpMiQKpbtjSPKaV5J5K3cpff6726kXT8p5Ui6gbcGR?cluster=devnet`
+- Explorer 1: `https://explorer.solana.com/tx/NoNGYPThfsy8jx43CvHBeVwXx6Cm5T9eLLNuM2JNEKfBSYnZLveQThxeio9Y7Divs9CEpg6TXFyUrjPBAEpQyrd?cluster=devnet`
+- Explorer 2: `https://explorer.solana.com/tx/4Pw18BGdsvv7zo9WYsMXi3p5cCxhgrv5H3mNpa9hyyPopuAkDx18r48WcFor6CSEnNukbVCdJpgwPDXKrsAk7cbj?cluster=devnet`
 
-영상에 표시되는 별도 recording run 영수증은
-`output/video/README.md`에 기록되어 있으며 두 건 모두 `finalized`다.
+위 두 영수증은 영상에 표시되는 같은 실행에서 나왔으며 모두 `finalized`다.
+음성은 Qwen3-TTS의 공식 한국어 화자로 만들었고 영상과 문서에 AI 생성임을
+밝혔다. 사용자 음성이나 음성 복제는 사용하지 않았다.
 
 ## 최종 제출 전 확인
 

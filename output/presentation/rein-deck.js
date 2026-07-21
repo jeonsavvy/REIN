@@ -50,8 +50,8 @@ const screenshot = path.resolve(
   "../../artifacts/qa/desktop-live-completed.png",
 );
 const liveUrl = process.env.REIN_LIVE_URL || "https://rein-vvwpcipqca-du.a.run.app";
-const marketTx = process.env.REIN_MARKET_TX || "2NuicT57mQD1Uu5yumPnubCkrdSVHQUegbxLEBsDtpdVTTjw5dTdyB3QpH9t7VZLGnyQyNV9DySA9xWMY9YMpArw";
-const githubTx = process.env.REIN_GITHUB_TX || "3vpyu3DsDvDT2m71kj3Pt5GQ4Ba2jQVYkuFhWL9eTUgiVXwpMiQKpbtjSPKaV5J5K3cpff6726kXT8p5Ui6gbcGR";
+const marketTx = process.env.REIN_MARKET_TX || "NoNGYPThfsy8jx43CvHBeVwXx6Cm5T9eLLNuM2JNEKfBSYnZLveQThxeio9Y7Divs9CEpg6TXFyUrjPBAEpQyrd";
+const githubTx = process.env.REIN_GITHUB_TX || "4Pw18BGdsvv7zo9WYsMXi3p5cCxhgrv5H3mNpa9hyyPopuAkDx18r48WcFor6CSEnNukbVCdJpgwPDXKrsAk7cbj";
 const hasLiveProof = ![liveUrl, marketTx, githubTx].some((value) =>
   value.startsWith("["),
 );
@@ -553,7 +553,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     bold: true,
   });
   const metrics = [
-    ["48", "unit tests", "amount·policy·quota·agent eval·failure"],
+    ["55", "unit tests", "amount·policy·quota·agent eval·failure"],
     ["08", "browser tests", "desktop + Pixel 7 + 402 + SSE reconnect"],
     ["09", "compiled routes", "Next.js production build"],
   ];

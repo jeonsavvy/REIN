@@ -1,13 +1,12 @@
-# REIN demo edit decision
+# REIN 데모 편집 원칙
 
-- Preserve the 94.96-second Playwright source as one uninterrupted run.
-- Do not splice, duplicate, or simulate any payment state.
-- Keep the completed report and both live Solana Explorer pages in sequence.
-- Add only authored Korean narration, matching Korean captions, a short final
-  REIN title card, and loudness/format normalization.
-- Disclose the synthetic narration in the delivery README.
-- Source: `../source/rein-live-run.webm`
-- Final target: 1920x1080, H.264/AAC, less than 3 minutes.
+- `source/rein-live-run.json`에 기록된 WebM에서 초기 브라우저 준비 구간 3.453초만 제외한다.
+- 구매 버튼 클릭 전부터 완료 보고서와 두 Explorer 화면까지 128.627초를 끊지 않는다.
+- 결제 상태를 재배열·복제·합성하지 않는다.
+- 앞뒤 REIN 카드, Qwen3-TTS `Sohee` 한국어 내레이션, 같은 내용의 자막,
+  음량 및 H.264/AAC 형식 정규화만 추가한다.
+- AI 생성 음성이고 음성 복제를 쓰지 않았다는 사실을 공개 문서와 영상에 남긴다.
+- 최종 규격은 1920x1080, 30 fps, 3분 이하다.
 
-This strategy was approved by the user's instruction to complete branding and
-submission packaging first, then independently record and caption the demo.
+이 원칙은 실제 결제 증거의 시간적 맥락을 유지하면서도 심사자가 제품의 목적을
+2분대에 이해하도록 만들기 위한 것이다.

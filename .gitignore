@@ -43,6 +43,7 @@ service-account*.json
 # operating systems and editors
 .DS_Store
 Thumbs.db
+__pycache__/
 .idea
 .vscode/*
 !.vscode/extensions.json

@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-07-21T12:52:49.218500+00:00",
+  "engine": "Qwen3-TTS 12Hz 0.6B CustomVoice",
+  "engineSource": "https://github.com/QwenLM/Qwen3-TTS",
+  "engineCommit": "022e286b98fbec7e1e916cb940cdf532cd9f488e",
+  "modelId": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+  "modelRevision": "85e237c12c027371202489a0ec509ded67b5e4b5",
+  "license": "Apache-2.0",
+  "speaker": "Sohee",
+  "speakerSource": "Official native Korean preset; no uploaded reference or personal voice clone",
+  "instruction": "차분하고 또렷한 제품 데모 내레이션입니다. 과장된 광고 말투를 피하고, 신뢰감 있게 보통 속도로 말합니다.",
+  "device": "cpu",
+  "dtype": "float32",
+  "segments": [
+    {
+      "id": "01",
+      "path": "output/video/edit/narration/01.wav",
+      "durationSeconds": 11.52,
+      "sha256": "181BC0EA7338F280D748BC0CA2701AA416F88CD14F3804905939CF53AD005FCB"
+    },
+    {
+      "id": "02",
+      "path": "output/video/edit/narration/02.wav",
+      "durationSeconds": 7.36,
+      "sha256": "3C843E0714EEDB7EBDA6809EEA33C15964AB9412F706EF689FA381CEAABFFCDC"
+    },
+    {
+      "id": "03",
+      "path": "output/video/edit/narration/03.wav",
+      "durationSeconds": 10.0,
+      "sha256": "BF52166CCCA9D5A0E0B1A869A82567AE16C1DEA43DD8B65BBE80529F07BCE4D9"
+    },
+    {
+      "id": "04",
+      "path": "output/video/edit/narration/04.wav",
+      "durationSeconds": 12.32,
+      "sha256": "B78B01C1917E3CBD2D33CF5CB762B5C76BE89A38FC32D8DBE686908798ED52FE"
+    },
+    {
+      "id": "05",
+      "path": "output/video/edit/narration/05.wav",
+      "durationSeconds": 10.08,
+      "sha256": "BB27243E330B23F80C386C9539B5B911410674E2DF5A833F88F9ABF017ACAB5D"
+    },
+    {
+      "id": "06",
+      "path": "output/video/edit/narration/06.wav",
+      "durationSeconds": 13.68,
+      "sha256": "927EFE47492D07EE326FD0193AD1A5FAA0E4C43B0BC35D2F001AA0347CE595B3"
+    },
+    {
+      "id": "07",
+      "path": "output/video/edit/narration/07.wav",
+      "durationSeconds": 11.04,
+      "sha256": "12EB5670304B55EB4F7D5398B12AEC969A68FEB3A6A35E985E5A22885D8FF582"
+    },
+    {
+      "id": "08",
+      "path": "output/video/edit/narration/08.wav",
+      "durationSeconds": 10.0,
+      "sha256": "D6F29AC3F8EF8B214C70B84C8ACE0AD62FB9133D6764C5692D1CF9BED7A99740"
+    },
+    {
+      "id": "09",
+      "path": "output/video/edit/narration/09.wav",
+      "durationSeconds": 12.8,
+      "sha256": "F5D058CB71C2B1E95D56A0DA5389131C46886EA2956EBEE82F61C46A9184356F"
+    },
+    {
+      "id": "10",
+      "path": "output/video/edit/narration/10.wav",
+      "durationSeconds": 6.48,
+      "sha256": "D9969ACFF3D5E47B48C6E0CB0F4DCCA9FDE3E28476AE8094335A42BF14FDF3BC"
+    }
+  ]
+}

@@ -1,80 +1,92 @@
-# REIN 최종 데모 대본과 샷 리스트
+# REIN 데모 영상 대본과 샷 리스트
 
-완성본: `output/video/edit/REIN-demo-final.mp4`
+제출용 마스터는 `output/video/edit/REIN-demo-final.mp4`다.
 
-- 길이: 1분 40.47초
-- 화면: 1920x1080, 30 fps
-- 음성: 로컬 Microsoft Heami 기반 AI 생성 한국어 내레이션
-- 자막: 한국어 번인 자막 + `output/video/edit/captions-ko.srt`
-- 결제: 한 번의 live run, Circle Devnet test USDC 0.003
-- 편집 원칙: 결제 구간 무편집. 첫 로딩 공백만 REIN 카드로 교체
+- 길이: 2분 22.71초
+- 화면: 1920x1080, 30 fps, H.264
+- 음성: Qwen3-TTS 0.6B의 공식 한국어 화자 `Sohee`로 만든 AI 내레이션
+- 자막: 영상에 번인한 한국어 자막 + `output/video/edit/captions-ko.srt`
+- 결제: 한 번의 실제 Cloud Run 실행에서 Circle Devnet 테스트 USDC 0.003 사용
+- 편집 원칙: 결제 구간을 자르거나 재배열하지 않고, 앞뒤에 REIN 타이틀 카드만 추가
 
-이 마스터는 그대로 제출할 수 있다. 사용자가 직접 마이크로 다시 녹음하는 것은
-필수가 아니며, 본인 목소리를 선호할 때만 아래 문장을 같은 시간대에 교체한다.
+사용자가 마이크로 다시 녹음할 필요는 없다. 이 영상은 AI 음성임을 명시했고,
+개인 음성 샘플이나 음성 복제를 사용하지 않았다. 본인 목소리를 쓰고 싶을 때만
+아래 문장을 같은 구간에 맞춰 교체하면 된다.
 
-## 00:00-00:06 — 문제
+## 00:00-00:13 — 문제
 
-> AI 에이전트가 결제할 때 중요한 건, 무엇을 왜 샀는지 증명하는 일입니다.
+> AI가 직접 결제할 때는 결과보다 먼저 확인할 것이 있습니다. 무엇을 샀고,
+> 왜 샀으며, 예산을 지켰는지입니다.
 
-화면: REIN 타이틀 카드에서 live app으로 전환.
+화면: REIN 타이틀 카드에서 실제 서비스로 전환한다.
 
-## 00:06-00:17 — 주문
+## 00:14-00:21 — 제품 소개
 
-> 레인은 목표와 예산만 받는 자율 데이터 구매 에이전트입니다. 지금 0.003
-> 테스트 USDC 안에서 솔라나와 이더리움의 시장 및 개발 모멘텀을 비교합니다.
+> 레인은 조사 목표와 최대 예산만 받는 데이터 구매 에이전트입니다.
 
-화면: `SOLANA DEVNET · LIVE`, 기본 목표, 3000 atomic 상한, 실행 버튼.
+화면: `Solana Devnet · 테스트 결제`, 조사 목표, 0.003 USDC 예산을 보여준다.
 
-## 00:17-00:31 — 자율 선택
+## 00:22-00:35 — 주문
 
-> 제미나이 3.5 플래시가 고정 카탈로그를 평가해 시장 스냅샷과 깃허브 건강도를
-> 선택합니다. 모델의 내부 사고는 노출하지 않고 관련성, 가격, 짧은 선택 이유만
-> 기록합니다.
+> 지금 솔라나와 이더리움의 시장 및 개발 흐름을, 최대 삼천 단위의 테스트
+> 예산 안에서 비교해 보겠습니다.
 
-화면: 두 상품 선택 event와 가격.
+화면: 실행 버튼을 한 번 누른 뒤 진행 상태가 시작된다.
 
-## 00:31-00:49 — 정책 경계
+## 00:36-00:52 — 데이터 선택
 
-> 서명 권한은 모델이 아니라 결정론적 정책이 보유합니다. 허용된 URL, 솔라나
-> 데브넷, 서클 테스트 USDC 민트, 수취 주소, 구매당, 실행당, 일일 상한을 코드로
-> 다시 검사합니다.
+> 제미나이 삼 점 오 플래시는 고정된 상품 목록에서 시장 데이터와 개발
+> 데이터를 선택합니다. 화면에는 가격과 짧은 선택 이유만 남깁니다.
 
-화면: policy 승인, 고정된 spend rail.
+화면: 두 상품의 선택과 가격을 확인한다. 모델의 내부 사고 과정은 표시하지 않는다.
 
-## 00:49-01:04 — x402 결제
+## 00:53-01:05 — 정책 검사
 
-> 보호된 에이 피 아이의 응답은 에이치 티 티 피, 사, 공, 이입니다. 에이전트가
-> 0.001과 0.002 USDC를 결제하고, 각 결제는 고유 식별자와 솔라나 거래 서명을
-> 남깁니다.
+> 결제 권한은 모델이 아닌 정책 엔진에 있습니다. 허용된 주소, 네트워크,
+> 자산과 예산 상한을 코드가 다시 확인합니다.
 
-화면: 두 `HTTP 402`와 두 `Devnet payment settled`, 영수증 2개.
+화면: 네트워크·mint·URL·수취 주소·가격·실행 및 일일 한도를 검사하는 단계다.
 
-## 01:04-01:17 — 구매 근거 보고서
+## 01:06-01:22 — x402 결제
 
-> 결제 전 고정한 두 스냅샷만 제미나이에 전달해 시장 신호와 개발 신호를 분리한
-> 보고서를 작성하고, 데이터의 한계도 함께 명시합니다.
+> 승인된 두 상품은 엑스 포 제로 투로 결제됩니다. 시장 데이터에 천 단위,
+> 개발 데이터에 이천 단위를 지불하고, 각각 실제 솔라나 거래 서명을 남깁니다.
 
-화면: executive brief, findings, limits of evidence.
+화면: 두 `HTTP 402` 응답과 두 결제 완료 기록이 순서대로 나타난다.
 
-## 01:17-01:34 — 공개 영수증
+## 01:23-01:35 — 결제 전 스냅샷
 
-> 마지막으로 솔라나 익스플로러에서 두 거래가 데브넷에서 최종 확정된 것을
-> 확인합니다. 모호한 결제는 자동 재시도하지 않고 정산 확인 상태로 남깁니다.
+> 결제 전에 고정한 데이터만 보고서에 사용합니다. 그래서 결제 뒤 원본
+> 서비스가 실패해도, 산 근거를 잃지 않습니다.
 
-화면: 두 실제 Explorer transaction 화면. 키·계정·개인 정보 없음.
+화면: 결제 전에 만든 `snapshotId`와 고정 데이터 반환 원칙을 설명한다.
 
-## 01:35-01:40 — 마무리
+## 01:36-01:49 — 결과와 영수증
 
-> 레인. Autonomy, held to proof.
+> 완료 화면에서는 결론, 사용 금액, 두 영수증을 먼저 확인하고, 상세 로그는
+> 필요할 때만 펼칩니다.
+
+화면: 결론, 0.003 USDC 지출, 영수증 2건을 먼저 보여준다.
+
+## 01:50-02:13 — 공개 온체인 증거
+
+> 마지막으로 솔라나 익스플로러에서 두 거래가 최종 확정됐는지 확인합니다.
+> 불명확한 결제는 자동으로 다시 보내지 않습니다.
+
+화면: 두 실제 Explorer 페이지에서 `Success`와 `Finalized`를 차례로 보여준다.
+
+## 02:14-02:22 — 마무리
+
+> 레인. 필요한 데이터만 사고, 모든 결제를 증명합니다.
 
 화면: REIN 카드와 `AI-generated narration · public Devnet proof` 고지.
 
 ## 녹화 실행 증거
 
-- Run: `run_7e8bcc6762404d8fa7ac7b1afc592201`
-- Market Explorer:
-  <https://explorer.solana.com/tx/cJW9o6c4X5Wh8YkXDBySbYdBb7y2BLdtrSc7A6qt6JDTQaTabqDDaekyfqCYUSbtAkJD8Sq3MTQUcvviRGxMMHm?cluster=devnet>
-- GitHub Explorer:
-  <https://explorer.solana.com/tx/2zpggYuHJ7Z5KCbg4iXqeTryhcevA5mqmHx1G57BZ8U73XxgaRQho2bgmg6rXnrzNBJhCBGoEn7QstGrLqXUAeeQ?cluster=devnet>
+- Run: `run_d15ee82b89cc4d179a7f664e513c1f59`
+- 시장 데이터, 0.001 테스트 USDC:
+  <https://explorer.solana.com/tx/NoNGYPThfsy8jx43CvHBeVwXx6Cm5T9eLLNuM2JNEKfBSYnZLveQThxeio9Y7Divs9CEpg6TXFyUrjPBAEpQyrd?cluster=devnet>
+- 개발 데이터, 0.002 테스트 USDC:
+  <https://explorer.solana.com/tx/4Pw18BGdsvv7zo9WYsMXi3p5cCxhgrv5H3mNpa9hyyPopuAkDx18r48WcFor6CSEnNukbVCdJpgwPDXKrsAk7cbj?cluster=devnet>
 
-두 거래는 Solana RPC에서 `finalized`, `err: null`로 재검증했다.
+두 거래 모두 Solana Devnet RPC에서 `finalized`, `err: null`로 확인했다.

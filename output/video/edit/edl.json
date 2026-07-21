@@ -1,23 +1,28 @@
 {
-  "source": "../source/rein-live-run.webm",
-  "sourceDurationSeconds": 94.96,
+  "recordingMetadata": "../source/rein-live-run.json",
+  "source": "../source/rein-live-run-2026-07-21T13-00-06-785Z.webm",
+  "sourceDurationSeconds": 132.08,
+  "sourceTrimSeconds": 3.453,
+  "liveDurationSeconds": 128.627,
   "edits": [
     {
       "in": 0,
-      "out": 4.5,
-      "operation": "replace_loading_blank_with_still",
+      "out": 5,
+      "operation": "prepend_still",
       "source": "../../../artifacts/deck-render-rein/slide-1.png",
-      "note": "The browser had not painted yet; no run or payment activity existed"
+      "note": "REIN opening card before the continuous live source"
     },
     {
-      "in": 4.5,
-      "out": 94.96,
+      "sourceIn": 3.453,
+      "sourceOut": 132.08,
+      "outputIn": 5,
+      "outputOut": 133.627,
       "operation": "preserve",
-      "note": "One uninterrupted live Cloud Run purchase and Explorer proof sequence"
+      "note": "One uninterrupted Cloud Run purchase, completed report, and both Explorer pages"
     },
     {
-      "in": 94.96,
-      "out": 100.5,
+      "in": 133.627,
+      "out": 142.71,
       "operation": "append_still",
       "source": "../../../artifacts/deck-render-rein/slide-1.png",
       "note": "REIN closing card"
@@ -25,8 +30,8 @@
   ],
   "overlays": [
     "Korean authored captions",
-    "Local Microsoft Heami synthetic narration",
-    "Synthetic-voice disclosure on closing card"
+    "Qwen3-TTS Sohee synthetic narration",
+    "AI-narration and public-Devnet-proof disclosure"
   ],
-  "settlementEdits": "none; only the pre-navigation blank frame is replaced"
+  "settlementEdits": "none; the continuous live source starts before the purchase click"
 }
