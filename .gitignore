@@ -23,22 +23,15 @@ service-account*.json
 /.proofbuy
 *.log
 
-# generated submission intermediates (keep final PDF/PPTX/MP4 and QA montage)
-/output/video/source/*.webm
-/output/video/edit/narration/
-/output/video/edit/voice-mix.wav
-/output/video/edit/REIN-demo-preview.mp4
-/output/video/edit/*-frames/
-/output/video/edit/*-contact-sheet.png
-/output/video/edit/*transcription*/
-/output/video/edit/final-transcription-input*/
-/artifacts/deck-render/
-/artifacts/deck-render-rein/
-/artifacts/deck-render-final/
-
-# superseded pre-REIN generated exports
-/output/pdf/ProofBuy-Hackathon-Deck.pdf
-/output/presentation/ProofBuy-Hackathon-Deck.*
+# local media, presentation, and review outputs
+/output/
+/artifacts/
+/docs/submission/
+/docs/evidence/
+/scripts/build-demo-video.ps1
+/scripts/generate_demo_narration.py
+/scripts/generate-demo-narration.ps1
+/scripts/record-live-demo.mjs
 
 # operating systems and editors
 .DS_Store

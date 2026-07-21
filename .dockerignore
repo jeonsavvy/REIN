@@ -6,4 +6,12 @@ node_modules
 coverage
 playwright-report
 test-results
+artifacts
+output
+docs/submission
+docs/evidence
+scripts/build-demo-video.ps1
+scripts/generate_demo_narration.py
+scripts/generate-demo-narration.ps1
+scripts/record-live-demo.mjs
 *.log
