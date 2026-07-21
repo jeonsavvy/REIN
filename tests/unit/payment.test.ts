@@ -65,12 +65,12 @@ describe("paid snapshot and live-origin binding", () => {
     vi.stubEnv("APP_BASE_URL", "");
     await expect(
       gateway.purchase({ payment, baseUrl: "https://proofbuy.example" }),
-    ).rejects.toThrow("APP_BASE_URL");
+    ).rejects.toThrow("결제 서비스 주소");
 
     vi.stubEnv("APP_BASE_URL", "https://proofbuy.example");
     await expect(
       gateway.purchase({ payment, baseUrl: "https://evil.example" }),
-    ).rejects.toThrow("APP_BASE_URL");
+    ).rejects.toThrow("허용된 서비스 주소");
   });
 
   it("maps an insufficient-balance settlement to the faucet recovery state", () => {

@@ -128,7 +128,7 @@ try {
     -c:v libx264 -preset medium -crf 18 -profile:v high -level 4.2 `
     -c:a aac -b:a 192k -ar 48000 `
     -metadata title="REIN - 사람은 한도를 정하고, 에이전트는 결제를 끝냅니다" `
-    -metadata comment="AI-generated narration with Qwen3-TTS Sohee; no voice cloning; public Solana Devnet proof" `
+    -metadata comment="Policy-gated data purchases with public Solana Devnet receipts" `
     -movflags +faststart $output
   if ($LASTEXITCODE -ne 0) { throw "Video render failed" }
 }

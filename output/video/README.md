@@ -1,12 +1,11 @@
 # REIN 데모 영상
 
-최종 업로드용 파일은 `edit/REIN-demo-final.mp4`다.
+데모 마스터는 `edit/REIN-demo-final.mp4`다.
 
 - 2분 23.91초, 1920x1080, 30 fps, H.264 + AAC
 - 영상에 번인한 한국어 자막과 별도 `edit/captions-ko.srt`
 - Qwen3-TTS 0.6B CustomVoice의 공식 한국어 화자 `Sohee`
-- 개인 음성 샘플과 음성 복제는 사용하지 않음
-- SHA-256: `F9979F38A87BA05D0EC861431D323120044150BBD7E6247731426BD5EE450F55`
+- SHA-256: `6D0AFDF150C76B52C8E43065F827D60651BBEE5A73E91A6E908486C09F50D70E`
 
 실행 버튼부터 보고서 완료, 두 Solana Explorer 거래 확인까지 하나의 Cloud Run
 실행을 시간순으로 담았다. 원본 실행 구간은 연속이며, 추가 편집은 앞뒤 REIN 카드,
@@ -48,5 +47,3 @@ $env:REIN_QWEN_TTS_ROOT='C:\path\to\qwen3-tts-runtime'
 .\scripts\generate-demo-narration.ps1 -Force
 .\scripts\build-demo-video.ps1 -Final
 ```
-
-완성본을 확인한 뒤 YouTube에 공개 또는 미등록으로 올리고 제출 폼에 URL을 넣는다.

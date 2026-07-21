@@ -1,16 +1,12 @@
-# Cloud Run 커스텀 도메인 준비
+# Cloud Run 커스텀 도메인
 
-상태: 도메인 입력 대기, 2026-07-21 KST
+상태: 선택 배포 경로
 
 ## 먼저 알아둘 점
 
-`rein.run.app`은 만들 수 없다. `run.app`은 Google이 소유하며 Cloud Run 기본 주소의
-고유 접미사는 사용자가 선택하지 않는다. 짧은 주소가 필요하면 소유권을 확인할 수
-있는 도메인의 하위 주소, 예를 들어 `app.example.com` 또는 `rein.example.com`을
-연결해야 한다.
-
-2026-07-21 읽기 전용 확인에서 현재 GCP 계정에 검증된 사용자 도메인은 없었다.
-도메인 구매·DNS 변경·API 활성화는 수행하지 않았다.
+`run.app`은 Google이 소유하며 Cloud Run 기본 주소의 고유 접미사는 플랫폼이
+자동 발급한다. 짧은 주소가 필요하면 소유권을 확인할 수 있는 도메인의 하위 주소,
+예를 들어 `app.example.com` 또는 `rein.example.com`을 연결한다.
 
 ## 이 서비스에 맞는 경로
 
@@ -21,15 +17,15 @@
 1. **Firebase Hosting rewrite** — 해커톤용 단일 서비스에 비교적 간단하고 관리형 TLS를 제공
 2. **Global external Application Load Balancer** — Google 권장 경로지만 설정과 비용 표면이 더 큼
 
-도메인이 정해지면 기본 선택은 Firebase Hosting이다. production 보안 기능, 복수 서비스
-라우팅, Cloud Armor가 필요할 때만 load balancer로 올린다.
+커스텀 도메인이 필요하면 기본 선택은 Firebase Hosting이다. production 보안 기능,
+복수 서비스 라우팅, Cloud Armor가 필요할 때만 load balancer로 올린다.
 
 공식 선택지는 [Cloud Run custom domain 문서](https://docs.cloud.google.com/run/docs/mapping-custom-domains)에
 정리되어 있다.
 
 ## 실행 전 확인
 
-- 사용자가 도메인을 소유하고 DNS를 수정할 수 있는가?
+- 도메인 소유권과 DNS 수정 권한이 확인됐는가?
 - 원하는 hostname이 `app.<domain>`인지 `rein.<domain>`인지 확정했는가?
 - 현재 Cloud Run 리비전과 생성 주소가 정상인가?
 - custom origin을 `APP_BASE_URL`에 반영했는가?

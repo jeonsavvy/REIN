@@ -46,4 +46,4 @@ Solana Explorer에서 두 거래의 확정 상태를 확인합니다.
 10
 00:02:14,000 --> 00:02:21,930
 REIN — 사람은 한도를 정하고, 에이전트는 결제를 끝냅니다.
-AI 생성 음성 · Solana Devnet 거래 2건
+Solana Devnet 거래 2건

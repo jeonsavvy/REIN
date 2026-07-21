@@ -194,8 +194,8 @@ export async function executeRun(
       if (!payTo) {
         throw new ProofBuyError({
           code: "PAYMENT_FAILED",
-          message: "SVM_PAY_TO가 설정되지 않았습니다.",
-          recovery: "Devnet 수취 주소를 Cloud Run 환경 변수로 설정하세요.",
+          message: "Devnet 수취 주소가 준비되지 않았습니다.",
+          recovery: "결제 서비스 상태를 확인한 뒤 다시 실행하세요.",
         });
       }
       const paymentId = generatePaymentId("rein_");

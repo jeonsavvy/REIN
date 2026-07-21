@@ -30,7 +30,7 @@ export function toRunError(error: unknown): RunError {
     return {
       code: "MODEL_TIMEOUT",
       message: "90초 실행 제한을 초과했습니다.",
-      recovery: "잠시 후 다시 실행하세요. 결제 제출 후라면 영수증 상태를 먼저 확인하세요.",
+      recovery: "잠시 후 다시 실행하세요. 결제 전송 후라면 영수증 상태를 먼저 확인하세요.",
     };
   }
   return {

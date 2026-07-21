@@ -52,7 +52,7 @@ const settleSchema = z.object({
 function assertBaseUrl(baseUrl: string): URL {
   const url = new URL(baseUrl);
   if (!new Set(["http:", "https:"]).has(url.protocol)) {
-    throw new PolicyDeniedError("APP_BASE_URL은 HTTP(S) URL이어야 합니다.");
+    throw new PolicyDeniedError("결제 서비스 주소는 HTTP(S) URL이어야 합니다.");
   }
   return url;
 }
@@ -144,7 +144,7 @@ export class DemoPaymentGateway implements PaymentGateway {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
         message: "데모 유료 경로가 HTTP 402 결제 요구를 반환하지 않았습니다.",
-        recovery: "상품 경로와 PROOFBUY_MODE 설정을 확인하세요.",
+        recovery: "결제 경로 상태를 확인한 뒤 다시 실행하세요.",
       });
     }
     const demoProof = sha256(
@@ -196,8 +196,8 @@ export class LiveX402PaymentGateway implements PaymentGateway {
     if (!expectedBaseUrl) {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
-        message: "APP_BASE_URL이 live 모드에 설정되지 않았습니다.",
-        recovery: "배포된 Cloud Run HTTPS 주소를 APP_BASE_URL로 고정하세요.",
+        message: "결제 서비스 주소가 준비되지 않았습니다.",
+        recovery: "서비스 상태를 확인한 뒤 다시 실행하세요.",
       });
     }
     if (
@@ -205,15 +205,15 @@ export class LiveX402PaymentGateway implements PaymentGateway {
       assertBaseUrl(expectedBaseUrl).origin
     ) {
       throw new PolicyDeniedError(
-        "결제 대상 주소가 고정된 APP_BASE_URL과 다릅니다.",
+        "결제 대상 주소가 허용된 서비스 주소와 다릅니다.",
       );
     }
     const privateKey = process.env.SVM_PRIVATE_KEY;
     if (!privateKey) {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
-        message: "SVM_PRIVATE_KEY가 설정되지 않았습니다.",
-        recovery: "Devnet 전용 키를 Secret Manager에서 Cloud Run 환경 변수로 연결하세요.",
+        message: "Devnet 결제 지갑이 준비되지 않았습니다.",
+        recovery: "결제 서비스 상태를 확인한 뒤 다시 실행하세요.",
       });
     }
     validatePaymentCandidate({

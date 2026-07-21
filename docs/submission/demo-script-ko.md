@@ -1,16 +1,13 @@
 # REIN 데모 영상 대본과 샷 리스트
 
-제출용 마스터는 `output/video/edit/REIN-demo-final.mp4`다.
+데모 마스터는 `output/video/edit/REIN-demo-final.mp4`다.
 
 - 길이: 2분 23.91초
 - 화면: 1920x1080, 30 fps, H.264
-- 음성: Qwen3-TTS 0.6B의 공식 한국어 화자 `Sohee`로 만든 AI 내레이션
+- 음성: Qwen3-TTS 0.6B의 공식 한국어 화자 `Sohee`
 - 자막: 영상에 번인한 한국어 자막 + `output/video/edit/captions-ko.srt`
 - 결제: 한 번의 Cloud Run 연속 실행에서 Circle Devnet USDC 0.003 사용
 - 편집 원칙: 결제 구간을 자르거나 재배열하지 않고, 앞뒤에 REIN 타이틀 카드만 추가
-
-최종본은 AI 음성임을 표시했으며 개인 음성 샘플이나 음성 복제를 사용하지 않았다.
-직접 녹음본으로 교체할 경우 아래 문장을 같은 구간에 맞춘다.
 
 ## 00:00-00:13 — 문제
 
@@ -80,7 +77,7 @@
 
 > 레인. 사람은 한도를 정하고, 에이전트는 결제를 끝냅니다.
 
-화면: REIN 카드와 `AI 생성 음성 · Solana Devnet 거래 2건` 고지.
+화면: REIN 카드와 `Solana Devnet 거래 2건`을 보여준다.
 
 ## 녹화 실행 증거
 

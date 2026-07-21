@@ -1,6 +1,6 @@
 # Live Devnet Deployment Runbook
 
-Status: executed and verified for the isolated REIN hackathon project on 2026-07-21.
+Status: executed and verified for the isolated REIN Devnet environment on 2026-07-21.
 
 ## Risk and rollback
 
@@ -39,8 +39,8 @@ deny-all client rules if Firebase tooling is used; server Admin SDK access uses 
 
 ## 2. Create an isolated Devnet wallet
 
-1. Generate a new buyer wallet and a separate receiver address used only for
-   this hackathon Devnet demo. `SVM_PAY_TO` is the receiver; the secret is the buyer.
+1. Generate a new buyer wallet and a separate receiver address dedicated to
+   REIN Devnet. `SVM_PAY_TO` is the receiver; the secret is the buyer.
 2. Put only the buyer private key in Secret Manager as `rein-svm-private-key`.
 3. Grant only the runtime identity access:
 
@@ -71,7 +71,7 @@ thresholds (₩7,000/₩14,000/₩35,000).
 ```powershell
 gcloud billing budgets create `
   --billing-account=YOUR_BILLING_ACCOUNT_ID `
-  --display-name="REIN hackathon guardrail" `
+  --display-name="REIN Devnet guardrail" `
   --budget-amount=35000KRW `
   --threshold-rule=percent=0.2 `
   --threshold-rule=percent=0.4 `
@@ -80,9 +80,9 @@ gcloud billing budgets create `
 
 Cloud Billing budgets alert; they do not automatically stop services. The Cloud
 Run instance cap and REIN daily atomic quota are the actual bounded controls.
-Because the judge-facing endpoint is intentionally public and has no user login,
-an unknown visitor can consume the small test-asset quota. Disable live traffic
-or the secret after the judging window and never fund the wallet with real assets.
+Because the endpoint is public and has no user login, an unknown visitor can consume
+the small test-asset quota. Disable live traffic or the secret when public access is
+no longer needed, and never fund the wallet with real assets.
 
 ## 4. Preview, execute, verify
 

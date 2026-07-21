@@ -11,7 +11,7 @@ const pptx = new pptxgen();
 pptx.layout = "LAYOUT_WIDE";
 pptx.author = "REIN";
 pptx.company = "REIN";
-pptx.subject = "Google Cloud x Solana AI Agentic Hackathon submission";
+pptx.subject = "REIN autonomous data procurement on Solana";
 pptx.title = "REIN - Autonomous data procurement on Solana";
 pptx.lang = "ko-KR";
 pptx.theme = {
@@ -576,7 +576,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
   });
   box(slide, 0.72, 5.94, 11.88, 0.5, { fill: hasLiveProof ? C.mint : C.amberPale, line: hasLiveProof ? C.green : C.amber });
   text(slide, hasLiveProof ? "PASS" : "NEXT GATE", 0.96, 6.08, 1.05, 0.18, { fontFace: MONO, fontSize: 7, bold: true, color: hasLiveProof ? C.green : C.amber });
-  text(slide, hasLiveProof ? "Explorer와 RPC에서 네트워크·자산·수취 주소·금액을 확인했습니다." : "사용자 GCP·Devnet 지갑 승인 → Cloud Run 배포 → x402 2건 → Explorer 캡처", 2.05, 6.0, 9.9, 0.3, { fontSize: 10.7, bold: true });
+  text(slide, hasLiveProof ? "Explorer와 RPC에서 네트워크·자산·수취 주소·금액을 확인했습니다." : "Devnet 결제와 Explorer·RPC 검증이 필요합니다.", 2.05, 6.0, 9.9, 0.3, { fontSize: 10.7, bold: true });
   footer(slide);
 }
 
@@ -597,15 +597,15 @@ function receipt(slide, x, y, label, amount, signature, live) {
   text(slide, "지금은 데이터 상품 2개를 다룹니다. 같은 결제 계약을 유료 리서치 API, B2B 데이터, 모델·도구 구매에도 적용할 수 있습니다.", 0.76, 4.28, 7.2, 0.72, { fontSize: 12, color: C.muted, breakLine: true, valign: "top" });
 
   box(slide, 8.78, 1.55, 3.62, 4.44, { fill: C.ink, line: C.ink });
-  text(slide, "SUBMISSION", 9.12, 1.91, 2.8, 0.2, { fontFace: MONO, fontSize: 8, color: C.mint, bold: true });
+  text(slide, "VERIFY", 9.12, 1.91, 2.8, 0.2, { fontFace: MONO, fontSize: 8, color: C.mint, bold: true });
   text(slide, "GitHub", 9.12, 2.43, 2.5, 0.24, { fontSize: 13, color: C.white, bold: true });
   text(slide, "github.com/jeonsavvy/REIN", 9.12, 2.78, 2.75, 0.23, { fontFace: MONO, fontSize: 7.2, color: C.mint });
   rule(slide, 9.12, 3.24, 2.9, C.muted, 0.7);
   text(slide, "Live app", 9.12, 3.55, 2.5, 0.24, { fontSize: 13, color: C.white, bold: true });
   text(slide, liveUrl, 9.12, 3.9, 2.75, 0.48, { fontFace: MONO, fontSize: 7.1, color: C.mint, breakLine: true, valign: "top" });
   rule(slide, 9.12, 4.64, 2.9, C.muted, 0.7);
-  text(slide, "Video demo", 9.12, 4.95, 2.5, 0.24, { fontSize: 13, color: C.white, bold: true });
-  text(slide, "≤ 3 min · captions included", 9.12, 5.3, 2.75, 0.23, { fontFace: MONO, fontSize: 7.2, color: C.mint });
+  text(slide, "Devnet receipts", 9.12, 4.95, 2.5, 0.24, { fontSize: 13, color: C.white, bold: true });
+  text(slide, "02 finalized transactions", 9.12, 5.3, 2.75, 0.23, { fontFace: MONO, fontSize: 7.2, color: C.mint });
 
   text(slide, "사람은 한도를 정하고, 에이전트는 결제를 끝냅니다.", 0.76, 5.68, 7.4, 0.42, { fontSize: 18, color: C.green, bold: true });
   footer(slide, "REIN / SOLANA AGENTIC COMMERCE");

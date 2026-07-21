@@ -200,8 +200,8 @@ async function runAdkStructured<T>(input: {
   if (!project) {
     throw new ProofBuyError({
       code: "MODEL_ERROR",
-      message: "GOOGLE_CLOUD_PROJECT가 설정되지 않았습니다.",
-      recovery: "Vertex AI가 활성화된 GCP 프로젝트를 환경 변수로 설정하세요.",
+      message: "Gemini 연결이 준비되지 않았습니다.",
+      recovery: "서비스 상태를 확인한 뒤 다시 실행하세요.",
     });
   }
   const { Gemini, InMemoryRunner, LlmAgent } =
