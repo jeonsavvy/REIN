@@ -68,6 +68,9 @@ Cloud Run live mode uses Firestore transactions.
   report over the already purchased evidence and never starts another payment.
 - The deterministic report is visible while final Gemini synthesis is still
   running, so model latency never hides already purchased evidence or receipts.
+- Gemini receives repository commit observations without stars or forks. A
+  semantic guard rejects specified evaluative market language and omitted
+  popularity metrics before a model report can replace the deterministic result.
 - Live fallback reports are visibly marked as degraded. Up to two report-only
   recovery attempts may reuse fully settled evidence; the recovery claim is
   atomic and stale after 60 seconds.
