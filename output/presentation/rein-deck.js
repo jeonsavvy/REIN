@@ -204,7 +204,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     breakLine: true,
     valign: "top",
   });
-  text(slide, "목표와 예산만 지정하면, 선택·결제·근거 보고서까지 한 번에.", 0.76, 4.18, 7.1, 0.44, {
+  text(slide, "목표와 예산을 받으면 데이터를 고르고, 결제한 뒤 근거와 영수증을 남깁니다.", 0.76, 4.18, 7.1, 0.44, {
     fontSize: 15,
     color: C.muted,
   });
@@ -255,13 +255,13 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "02 / problem",
-    "AI가 결제할수록, 답변보다 구매 통제가 먼저입니다.",
-    "Target: 유료 외부 데이터를 쓰는 리서치·AI 운영팀",
+    "데이터를 고르는 모델에게 결제 권한까지 맡길 수는 없습니다.",
+    "대상: 유료 외부 데이터를 쓰는 리서치·AI 운영팀",
   );
   const risks = [
-    ["01", "WHY", "왜 이 데이터를 샀는가?", "추천 문장만으로는 관련성과 가격을 감사할 수 없습니다."],
-    ["02", "LIMIT", "상한을 정말 지켰는가?", "모델 출력만 믿으면 URL·자산·금액이 정책을 벗어날 수 있습니다."],
-    ["03", "PROOF", "정말 한 번만 결제했는가?", "timeout과 retry는 이중 결제 또는 가짜 완료 표시를 만듭니다."],
+    ["01", "선택 근거", "왜 이 데이터를 샀는가?", "추천 문장만으로는 관련성과 가격을 대조하기 어렵습니다."],
+    ["02", "정책", "예산과 자산 정책을 지켰는가?", "모델 출력만으로 URL·자산·금액을 제한할 수 없습니다."],
+    ["03", "정산", "중복 결제 없이 정산됐는가?", "시간 초과 뒤 재시도는 중복 결제나 잘못된 완료 처리를 만들 수 있습니다."],
   ];
   risks.forEach(([n, tag, titleValue, body], i) => {
     const x = 0.72 + i * 4.14;
@@ -293,13 +293,13 @@ function receipt(slide, x, y, label, amount, signature, live) {
       valign: "top",
     });
   });
-  text(slide, "REIN의 답", 0.74, 5.76, 1.35, 0.22, {
+  text(slide, "REIN이 남기는 것", 0.74, 5.76, 1.35, 0.22, {
     color: C.green,
     fontFace: MONO,
     fontSize: 8,
     bold: true,
   });
-  text(slide, "선택 이유 + deterministic policy + 공개 영수증을 하나의 run에 묶습니다.", 2.15, 5.65, 9.9, 0.44, {
+  text(slide, "선택 이유, 코드 정책, Explorer 영수증을 실행 기록 하나에 묶습니다.", 2.15, 5.65, 9.9, 0.44, {
     fontSize: 16,
     bold: true,
   });
@@ -312,15 +312,15 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "03 / product",
-    "사람은 목표와 상한을 정하고, 에이전트는 조달을 완결합니다.",
-    "기본 데모: 0.003 테스트 USDC로 SOL·ETH 시장과 개발 모멘텀 비교",
+    "사용자는 목표와 상한만 정합니다.\nREIN이 선택·검사·결제·보고를 수행합니다.",
+    "기본 실행: 0.003 Devnet USDC로 SOL·ETH 시장과 개발 모멘텀 비교",
   );
   const steps = [
-    ["GOAL", "조사 주문", "목표 + 3000 atomic"],
-    ["SELECT", "상품 선택", "Market 1000\nGitHub 2000"],
-    ["POLICY", "서명 전 승인", "URL·mint·금액\n상한 재검증"],
-    ["PAY", "x402 결제", "Devnet USDC\n2 transactions"],
-    ["PROVE", "근거 보고서", "snapshot + receipt\n+ caveat"],
+    ["GOAL", "조사 목표", "목표 + 0.003 USDC"],
+    ["SELECT", "상품 선택", "시장 0.001\nGitHub 0.002"],
+    ["POLICY", "결제 전 검사", "URL·mint·금액\n상한 확인"],
+    ["PAY", "x402 결제", "Devnet USDC\n거래 2건"],
+    ["RESULT", "결과 기록", "스냅샷 + 영수증\n+ 데이터 한계"],
   ];
   steps.forEach(([tag, name, detail], i) => {
     const x = 0.62 + i * 2.52;
@@ -361,17 +361,17 @@ function receipt(slide, x, y, label, amount, signature, live) {
     color: C.green,
     bold: true,
   });
-  text(slide, "상품 · 관련성 · 가격 · 짧은 선택 이유", 2.55, 5.43, 3.55, 0.4, {
+  text(slide, "상품 · 관련성 · 가격 · 선택 이유", 2.55, 5.43, 3.55, 0.4, {
     fontSize: 13,
     bold: true,
   });
-  text(slide, "NOT EXPOSED", 7.03, 5.55, 1.2, 0.2, {
+  text(slide, "모델 권한 밖", 7.03, 5.55, 1.2, 0.2, {
     fontFace: MONO,
     fontSize: 7.5,
     color: C.brick,
     bold: true,
   });
-  text(slide, "chain-of-thought · key · arbitrary URL", 8.25, 5.43, 3.8, 0.4, {
+  text(slide, "결제 키 · 임의 URL · 임의 자산", 8.25, 5.43, 3.8, 0.4, {
     fontSize: 12,
     color: C.brick,
     bold: true,
@@ -385,8 +385,8 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "04 / experience",
-    "채팅창 대신, 구매 결정을 읽는 조달 데스크.",
-    "Cloud Run live run — Gemini 선택, 정책 승인, Devnet 결제, 영수증을 한 화면에",
+    "목표·예산·선택 이유·영수증을 한 흐름에서 확인합니다.",
+    "Cloud Run 실행 — Gemini 선택, 정책 검사, Devnet 결제, 영수증",
   );
   slide.addImage({
     path: screenshot,
@@ -411,9 +411,9 @@ function receipt(slide, x, y, label, amount, signature, live) {
   });
 
   const notes = [
-    ["01", "Timeline first", "탐색 → 이유 → 정책 → 결제 → 수령을 같은 축에서 확인"],
-    ["02", "Spend always visible", "지출, 남은 상한, 영수증을 decision 옆에 고정"],
-    ["03", "Failure is a state", "denied·unavailable·reconciling·timeout을 명시적으로 복구"],
+    ["01", "구매 순서", "탐색 → 선택 이유 → 정책 → 결제 → 수령을 시간순으로 확인"],
+    ["02", "예산 고정", "지출, 남은 예산, 영수증을 선택 결과 옆에 배치"],
+    ["03", "상태별 복구", "denied·unavailable·reconciling·timeout별 복구 안내"],
   ];
   notes.forEach(([n, titleValue, body], i) => {
     const y = 2.69 + i * 1.22;
@@ -445,7 +445,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
     slide,
     "05 / architecture",
     "한 서비스, 세 개의 권한 경계.",
-    "Cloud Run이 UI·agent API·paid data API를 소유하고, 키는 Secret Manager에만 존재",
+    "UI·에이전트 API·유료 데이터 API는 Cloud Run에 두고, 키는 Secret Manager에서만 불러옵니다.",
   );
   const layers = [
     { x: 0.72, w: 3.26, label: "DECIDE", tone: C.green, title: "Vertex AI + Google ADK", items: ["gemini-3.5-flash", "structured selection", "purchased-evidence synthesis"] },
@@ -485,7 +485,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
   slide.addShape(pptx.ShapeType.line, { x: 8.99, y: 4.03, w: 0.31, h: 0, line: { color: C.rule, width: 1.2, endArrowType: "triangle" } });
   box(slide, 1.52, 5.65, 10.3, 0.58, { fill: C.mint, line: C.green });
   text(slide, "PRE-PAYMENT SNAPSHOT", 1.78, 5.84, 2.06, 0.18, { fontFace: MONO, fontSize: 7.2, color: C.green, bold: true });
-  text(slide, "CoinGecko + GitHub → snapshotId 고정 → 결제 후 동일 payload 반환", 3.9, 5.71, 7.38, 0.38, { fontSize: 11.5, bold: true });
+  text(slide, "CoinGecko + GitHub → snapshotId 고정 → 결제 후 같은 데이터 반환", 3.9, 5.71, 7.38, 0.38, { fontSize: 11.5, bold: true });
   footer(slide);
 }
 
@@ -495,16 +495,16 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "06 / safety",
-    "안전은 프롬프트가 아니라 불변식으로 구현했습니다.",
-    "모델 제안은 hypothesis, 결제 정책은 code-owned contract",
+    "주소·네트워크·자산·예산은 코드가 결제 전에 검증합니다.",
+    "Gemini는 상품을 제안하고, 결제 허용 여부는 정책 엔진이 결정합니다.",
   );
   const safeguards = [
-    ["ALLOWLIST", "2 products only", "모델은 URL·network·mint·payee·price를 만들 수 없음"],
-    ["ATOMIC", "BigInt money", "6자리 atomic string, purchase 4000 / run 10000 / daily 250000"],
-    ["IDEMPOTENCY", "One payment fingerprint", "payment ID가 다른 요청에 재사용되면 transaction에서 거부"],
-    ["RECONCILE", "No blind retry", "서명 후 상태 불명은 reservation을 유지하고 Explorer 확인"],
-    ["SECRET", "Server-side signer", "키는 Secret Manager → Cloud Run에만 주입, Gemini·브라우저에는 없음"],
-    ["INJECTION", "Untrusted evidence", "숫자 중심 normalization, catalog/data 안의 지시는 무시"],
+    ["ALLOWLIST", "상품 2개 고정", "URL·network·mint·payee·price는 카탈로그 값만 허용"],
+    ["ATOMIC", "금액은 BigInt", "6자리 atomic 문자열, 구매 4000 / 실행 10000 / 일일 250000"],
+    ["IDEMPOTENCY", "요청별 결제 ID", "같은 payment ID가 다른 요청에 쓰이면 Firestore에서 거부"],
+    ["RECONCILE", "자동 재결제 금지", "서명 뒤 상태가 불명확하면 예약을 유지하고 Explorer에서 확인"],
+    ["SECRET", "서버 전용 서명 키", "키는 Cloud Run에만 주입하며 Gemini·브라우저에는 전달하지 않음"],
+    ["INJECTION", "외부 데이터는 비신뢰 입력", "카탈로그와 데이터 속 지시는 무시하고 허용된 숫자 필드만 사용"],
   ];
   safeguards.forEach(([tag, titleValue, body], i) => {
     const col = i % 2;
@@ -530,8 +530,8 @@ function receipt(slide, x, y, label, amount, signature, live) {
     rule(slide, x, y + 0.94, 5.55, C.soft, 0.6);
   });
   box(slide, 0.72, 6.12, 11.88, 0.45, { fill: C.brickPale, line: C.brick });
-  text(slide, "MVP excludes", 0.95, 6.24, 1.25, 0.18, { fontFace: MONO, fontSize: 7, color: C.brick, bold: true });
-  text(slide, "mainnet · real funds · arbitrary seller · login · subscription · multi-agent", 2.25, 6.17, 9.85, 0.28, { fontSize: 10.5, color: C.brick, bold: true });
+  text(slide, "제외 범위", 0.95, 6.24, 1.25, 0.18, { fontFace: MONO, fontSize: 7, color: C.brick, bold: true });
+  text(slide, "Mainnet · 실자산 · 임의 판매자 · 로그인 · 구독 · 멀티에이전트", 2.25, 6.17, 9.85, 0.28, { fontSize: 10.5, color: C.brick, bold: true });
   footer(slide);
 }
 
@@ -541,8 +541,8 @@ function receipt(slide, x, y, label, amount, signature, live) {
   header(
     slide,
     "07 / evidence",
-    hasLiveProof ? "두 번의 구매, 두 개의 공개 영수증." : "로컬은 검증 완료. 온체인 증거는 live smoke 뒤에 고정합니다.",
-    hasLiveProof ? liveUrl : "현재 deck은 정직한 제출 초안이며, simulated receipt를 온체인으로 주장하지 않습니다.",
+    hasLiveProof ? "구매 2건과 Explorer 영수증 2건." : "로컬 검증 완료. Devnet 거래는 live smoke 뒤에 고정합니다.",
+    hasLiveProof ? liveUrl : "Devnet 거래가 없습니다. live smoke 이후 거래 서명을 추가하세요.",
   );
   receipt(slide, 0.72, 2.7, "Market snapshot", "0.001 USDC", marketTx, hasLiveProof);
   receipt(slide, 6.89, 2.7, "GitHub health", "0.002 USDC", githubTx, hasLiveProof);
@@ -570,7 +570,7 @@ function receipt(slide, x, y, label, amount, signature, live) {
   });
   box(slide, 0.72, 5.94, 11.88, 0.5, { fill: hasLiveProof ? C.mint : C.amberPale, line: hasLiveProof ? C.green : C.amber });
   text(slide, hasLiveProof ? "PASS" : "NEXT GATE", 0.96, 6.08, 1.05, 0.18, { fontFace: MONO, fontSize: 7, bold: true, color: hasLiveProof ? C.green : C.amber });
-  text(slide, hasLiveProof ? "Explorer에서 network·mint·payee·amount를 검증했습니다." : "사용자 GCP·Devnet wallet 승인 → Cloud Run 배포 → x402 2건 → Explorer 캡처", 2.05, 6.0, 9.9, 0.3, { fontSize: 10.7, bold: true });
+  text(slide, hasLiveProof ? "Explorer와 RPC에서 네트워크·자산·수취 주소·금액을 확인했습니다." : "사용자 GCP·Devnet 지갑 승인 → Cloud Run 배포 → x402 2건 → Explorer 캡처", 2.05, 6.0, 9.9, 0.3, { fontSize: 10.7, bold: true });
   footer(slide);
 }
 
@@ -580,13 +580,13 @@ function receipt(slide, x, y, label, amount, signature, live) {
   mark(slide, 0.76, 0.61, 1.25);
   text(slide, "REIN/", 1.53, 0.55, 2.2, 0.52, { fontSize: 26, bold: true });
   text(slide, "WHY NOW", 0.76, 1.65, 1.3, 0.2, { fontFace: MONO, fontSize: 8, color: C.green, bold: true });
-  text(slide, "에이전트 커머스의 다음 UX는\n‘살 수 있음’이 아니라 ‘증명 가능한 구매’입니다.", 0.72, 1.98, 7.85, 1.36, {
+  text(slide, "구매 결과에는 선택 이유, 정책 판단,\n거래 영수증이 함께 남아야 합니다.", 0.72, 1.98, 7.85, 1.36, {
     fontSize: 31,
     bold: true,
     breakLine: true,
     valign: "top",
   });
-  text(slide, "REIN은 작은 고정 카탈로그에서 시작하지만, 같은 contract를 리서치 API, B2B 데이터, 모델·툴 조달로 확장할 수 있습니다.", 0.76, 3.75, 7.2, 0.8, { fontSize: 13, color: C.muted, breakLine: true, valign: "top" });
+  text(slide, "지금은 데이터 상품 2개를 다룹니다. 같은 결제 계약을 리서치 API, B2B 데이터, 모델·도구 구매에도 적용할 수 있습니다.", 0.76, 3.75, 7.2, 0.8, { fontSize: 13, color: C.muted, breakLine: true, valign: "top" });
 
   box(slide, 8.78, 1.55, 3.62, 4.44, { fill: C.ink, line: C.ink });
   text(slide, "SUBMISSION", 9.12, 1.91, 2.8, 0.2, { fontFace: MONO, fontSize: 8, color: C.mint, bold: true });

@@ -70,7 +70,7 @@ describe("paid snapshot and live-origin binding", () => {
     vi.stubEnv("APP_BASE_URL", "https://proofbuy.example");
     await expect(
       gateway.purchase({ payment, baseUrl: "https://evil.example" }),
-    ).rejects.toThrow("origin");
+    ).rejects.toThrow("APP_BASE_URL");
   });
 
   it("maps an insufficient-balance settlement to the faucet recovery state", () => {

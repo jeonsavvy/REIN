@@ -22,7 +22,7 @@
     },
     {
       "in": 133.627,
-      "out": 142.867,
+      "out": 143.93,
       "operation": "append_still",
       "source": "../../../artifacts/deck-render-rein/slide-1.png",
       "note": "REIN closing card"
@@ -31,7 +31,8 @@
   "overlays": [
     "Korean authored captions",
     "Qwen3-TTS Sohee synthetic narration",
-    "AI-narration and public-Devnet-proof disclosure"
+    "AI-narration and public-Devnet-proof disclosure",
+    "Budget-helper copy replacement only while that source line is visible"
   ],
   "settlementEdits": "none; the continuous live source starts before the purchase click"
 }

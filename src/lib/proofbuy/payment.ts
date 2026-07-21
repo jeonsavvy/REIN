@@ -63,10 +63,10 @@ export function x402SettlementFailure(message: string): ProofBuyError {
     code: insufficient ? "INSUFFICIENT_DEVNET_BALANCE" : "PAYMENT_FAILED",
     message: insufficient
       ? "Devnet SOL 또는 테스트 USDC 잔액이 부족합니다."
-      : `x402 settlement failed: ${message}`,
+      : `x402 정산 실패: ${message}`,
     recovery: insufficient
       ? "Solana와 Circle faucet에서 테스트 자산을 보충하세요."
-      : "facilitator 상태와 수취 주소를 확인한 뒤 새 run으로 시도하세요.",
+      : "x402 정산 서비스와 수취 주소를 확인한 뒤 새 조사를 시작하세요.",
   });
 }
 
@@ -87,17 +87,17 @@ export function x402TransportFailure(
       message: paymentPayloadCreated
         ? error instanceof Error
           ? error.message
-          : "x402 response was lost after signing"
+          : "서명 후 x402 응답을 받지 못했습니다."
         : timedOut
           ? "모델 또는 결제 네트워크가 제한 시간 안에 응답하지 않았습니다."
           : error instanceof Error
             ? error.message
-            : "x402 request failed",
+            : "x402 요청에 실패했습니다.",
       recovery: paymentPayloadCreated
         ? "자동 재결제하지 말고 Solana Explorer에서 payment ID와 서명을 대조하세요."
         : timedOut
-          ? "서명 전 timeout이므로 네트워크 상태를 확인한 뒤 새 run으로 시도하세요."
-          : "네트워크와 facilitator 상태를 확인한 뒤 새 run으로 시도하세요.",
+          ? "서명 전 시간 초과입니다. 네트워크 상태를 확인한 뒤 새 조사를 시작하세요."
+          : "네트워크와 x402 정산 서비스 상태를 확인한 뒤 새 조사를 시작하세요.",
     },
     paymentPayloadCreated,
   );
@@ -143,7 +143,7 @@ export class DemoPaymentGateway implements PaymentGateway {
     if (challenge.status !== 402) {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
-        message: "데모 유료 경로가 HTTP 402 challenge를 반환하지 않았습니다.",
+        message: "데모 유료 경로가 HTTP 402 결제 요구를 반환하지 않았습니다.",
         recovery: "상품 경로와 PROOFBUY_MODE 설정을 확인하세요.",
       });
     }
@@ -162,7 +162,7 @@ export class DemoPaymentGateway implements PaymentGateway {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
         message: `데모 결제 재시도가 ${response.status}로 거부되었습니다.`,
-        recovery: "run을 새로 시작해 payment ID와 스냅샷을 다시 생성하세요.",
+        recovery: "새 조사를 시작해 payment ID와 스냅샷을 다시 생성하세요.",
       });
     }
     const snapshot = validatePaidSnapshot(await response.json(), input.payment);
@@ -196,8 +196,8 @@ export class LiveX402PaymentGateway implements PaymentGateway {
     if (!expectedBaseUrl) {
       throw new ProofBuyError({
         code: "PAYMENT_FAILED",
-        message: "APP_BASE_URL이 live mode에 설정되지 않았습니다.",
-        recovery: "배포된 Cloud Run HTTPS origin을 APP_BASE_URL로 고정하세요.",
+        message: "APP_BASE_URL이 live 모드에 설정되지 않았습니다.",
+        recovery: "배포된 Cloud Run HTTPS 주소를 APP_BASE_URL로 고정하세요.",
       });
     }
     if (
@@ -205,7 +205,7 @@ export class LiveX402PaymentGateway implements PaymentGateway {
       assertBaseUrl(expectedBaseUrl).origin
     ) {
       throw new PolicyDeniedError(
-        "결제 대상 origin이 고정된 APP_BASE_URL과 다릅니다.",
+        "결제 대상 주소가 고정된 APP_BASE_URL과 다릅니다.",
       );
     }
     const privateKey = process.env.SVM_PRIVATE_KEY;

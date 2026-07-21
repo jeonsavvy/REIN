@@ -43,7 +43,7 @@ const planSchema = z
 const briefSchema = z
   .object({
     headline: z.string().min(4).max(100),
-    executiveSummary: z.string().min(20).max(800),
+    executiveSummary: z.string().min(20).max(360),
     findings: z
       .array(
         z
@@ -104,12 +104,12 @@ export class DemoProcurementPlanner implements ProcurementPlanner {
         productId: product.id,
         rationale:
           product.id === "market_snapshot"
-            ? "가격과 24시간 변화율은 단기 시장 모멘텀 비교에 직접 필요한 증거입니다."
-            : "최근 커밋과 저장소 건강도는 개발 모멘텀을 확인하는 직접적인 증거입니다.",
+            ? "가격과 24시간 변화율로 단기 시장 흐름을 비교할 수 있습니다."
+            : "최근 커밋과 저장소 지표로 개발 활동을 비교할 수 있습니다.",
       })),
       decisionSummary:
         selected.length > 0
-          ? `예산 ${formatUsdcAtomic(input.maxBudgetAtomic)} 테스트 USDC 안에서 목표와 직접 관련된 ${selected.length}개 상품만 선택했습니다.`
+          ? `예산 ${formatUsdcAtomic(input.maxBudgetAtomic)} 테스트 USDC 안에서 목표에 필요한 ${selected.length}개 상품을 선택했습니다.`
           : "현재 예산으로 구매 가능한 관련 데이터 상품이 없습니다.",
     };
   }
@@ -156,10 +156,10 @@ export class DemoProcurementPlanner implements ProcurementPlanner {
       }
     }
     return {
-      headline: "선택한 근거로 본 SOL–ETH 모멘텀",
+      headline: "SOL–ETH 시장·개발 모멘텀 비교",
       executiveSummary:
         findings.length > 0
-          ? `REIN이 ${input.evidence.length}개 데이터 상품을 선택하고 데모 결제를 기록했습니다. 시장과 개발 신호는 서로 다른 시간축이므로 하나의 순위로 단정하지 않고 함께 제시합니다.`
+          ? "시장과 개발 데이터는 서로 다른 시간축을 보여줍니다. 하나의 종합 순위로 단정하지 않고 각 신호를 나란히 제시합니다."
           : "구매한 데이터가 없어 비교 결론을 만들지 않았습니다.",
       findings:
         findings.length > 0
@@ -168,7 +168,7 @@ export class DemoProcurementPlanner implements ProcurementPlanner {
               {
                 label: "구매 근거",
                 value: "구매 없음",
-                interpretation: "예산 또는 가용성 제약으로 구매된 증거가 없습니다.",
+                interpretation: "예산 또는 가용성 제약으로 구매한 데이터가 없습니다.",
               },
             ],
       caveats: [
@@ -301,6 +301,8 @@ export class VertexAdkProcurementPlanner implements ProcurementPlanner {
         "Do not provide investment advice or claim that snapshots represent an entire ecosystem.",
         "A commits30d value with commits30dCapped=true means at least 100, not an exact total.",
         "Use natural Korean, format large USD values with separators and sensible precision, and keep caveats explicit.",
+        "Write the executive summary in at most two sentences; state the comparison first and leave detailed numbers to findings.",
+        "Do not wrap numbers in quotation marks, repeat raw payloads, narrate the interface, or use promotional adjectives.",
         "Return only the requested structured output without chain-of-thought.",
       ].join("\n"),
       payload: {

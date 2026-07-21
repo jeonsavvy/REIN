@@ -36,6 +36,6 @@ export function toRunError(error: unknown): RunError {
   return {
     code: "INTERNAL_ERROR",
     message: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
-    recovery: "실행 로그를 확인한 뒤 새 run으로 다시 시도하세요.",
+    recovery: "실행 기록을 확인한 뒤 새 조사를 시작하세요.",
   };
 }

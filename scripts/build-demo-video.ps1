@@ -34,6 +34,10 @@ $sourceVideo = Join-Path $repoRoot ([string]$metadata.sourceVideo).Replace("/", 
 if (-not (Test-Path -LiteralPath $sourceVideo)) {
   throw "Source recording is missing: $sourceVideo"
 }
+$captionFont = Join-Path $env:WINDIR "Fonts\NotoSansKR-VF.ttf"
+if (-not (Test-Path -LiteralPath $captionFont)) {
+  throw "Korean caption font is missing: $captionFont"
+}
 
 $segments = Get-Content -Raw -Encoding UTF8 $segmentsPath | ConvertFrom-Json
 $audioArgs = @("-y", "-hide_banner", "-loglevel", "error")
@@ -75,6 +79,25 @@ if ($liveDuration -le 1) { throw "Source recording is too short after trim." }
 $introDuration = 5.0
 $outroDuration = [math]::Max(5.0, $latestAudioEnd + 2.0 - $introDuration - $liveDuration)
 $finalDuration = $introDuration + $liveDuration + $outroDuration
+$firstExplorer = @($metadata.actions | Where-Object { $_.name -eq "explorer-visible" })[0]
+$copyOverlayEnd = if ($firstExplorer) {
+  $introDuration + ([double]$firstExplorer.elapsedMs / 1000.0) - $trimStart - 0.1
+} else {
+  $introDuration + $liveDuration
+}
+$receiptsVisible = @($metadata.actions | Where-Object { $_.name -eq "receipts-visible" })[0]
+$reportVisible = @($metadata.actions | Where-Object { $_.name -eq "report-visible" })[0]
+$copyOverlayPause = if ($receiptsVisible) {
+  # Playwright records the event just after the browser has scrolled the target into view.
+  $introDuration + ([double]$receiptsVisible.elapsedMs / 1000.0) - $trimStart - 0.25
+} else {
+  $copyOverlayEnd
+}
+$copyOverlayResume = if ($reportVisible) {
+  $introDuration + ([double]$reportVisible.elapsedMs / 1000.0) - $trimStart - 0.25
+} else {
+  $copyOverlayEnd
+}
 
 $mixInputs = (0..($segments.Count - 1) | ForEach-Object { "[a$_]" }) -join ""
 $audioFilters += "$mixInputs" + "amix=inputs=$($segments.Count):duration=longest:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,apad=whole_dur=$finalDuration[mix]"
@@ -84,12 +107,18 @@ if ($LASTEXITCODE -ne 0) { throw "Narration mix failed" }
 Push-Location $repoRoot
 try {
   $captionFilter = "subtitles=output/video/edit/captions-ko.srt:force_style='FontName=Noto Sans KR,FontSize=16,PrimaryColour=&H00FFFFFF,BackColour=&H900B1511,BorderStyle=3,Outline=5,Shadow=0,MarginV=32,Alignment=2'"
+  $fontForFfmpeg = $captionFont.Replace("\", "/").Replace(":", "\:")
+  $copyOverlayFilter = "drawbox=x=250:y=458:w=500:h=28:color=0xF3F0E7:t=fill:enable='between(t,$introDuration,$copyOverlayPause)'," +
+    "drawtext=fontfile='$fontForFfmpeg':text='예산은 Circle Devnet USDC 기준입니다.':fontcolor=0x59665F:fontsize=13:x=256:y=465:enable='between(t,$introDuration,$copyOverlayPause)'," +
+    "drawbox=x=250:y=572:w=500:h=30:color=0xF3F0E7:t=fill:enable='between(t,$copyOverlayResume,$copyOverlayEnd)'," +
+    "drawtext=fontfile='$fontForFfmpeg':text='예산은 Circle Devnet USDC 기준입니다.':fontcolor=0x59665F:fontsize=13:x=256:y=579:enable='between(t,$copyOverlayResume,$copyOverlayEnd)'"
   $sourceRelative = ([System.IO.Path]::GetRelativePath($repoRoot, $sourceVideo)).Replace("\", "/")
   $videoFilter = "[0:v]trim=start=$trimStart,setpts=PTS-STARTPTS,fps=30,scale=1920:1080:flags=lanczos,setsar=1,format=yuv420p[live];" +
     "[1:v]fps=30,scale=1920:1080:flags=lanczos,setsar=1,format=yuv420p,split=2[cardA][cardB];" +
     "[cardA]trim=duration=$introDuration,setpts=PTS-STARTPTS[intro];" +
     "[cardB]trim=duration=$outroDuration,setpts=PTS-STARTPTS[outro];" +
-    "[intro][live][outro]concat=n=3:v=1:a=0[base];[base]$captionFilter[outv]"
+    "[intro][live][outro]concat=n=3:v=1:a=0[base];" +
+    "[base]$copyOverlayFilter[copyfixed];[copyfixed]$captionFilter[outv]"
   & ffmpeg -y -hide_banner -loglevel error `
     -i $sourceRelative `
     -loop 1 -t ($introDuration + $outroDuration) -i "artifacts/deck-render-rein/slide-1.png" `
@@ -98,7 +127,7 @@ try {
     -map "[outv]" -map "2:a:0" -t $finalDuration `
     -c:v libx264 -preset medium -crf 18 -profile:v high -level 4.2 `
     -c:a aac -b:a 192k -ar 48000 `
-    -metadata title="REIN - 필요한 데이터만 사고, 모든 결제를 증명합니다" `
+    -metadata title="REIN - 필요한 데이터만 사고, 결제마다 근거를 남깁니다" `
     -metadata comment="AI-generated narration with Qwen3-TTS Sohee; no voice cloning; public Solana Devnet proof" `
     -movflags +faststart $output
   if ($LASTEXITCODE -ne 0) { throw "Video render failed" }

@@ -23,30 +23,31 @@
 
 ## 프로젝트명
 
-REIN - Gemini 3.5 Flash 자율 데이터 구매 에이전트
+REIN — 예산을 지키는 AI 데이터 구매 에이전트
 
 ## 한 줄 소개
 
-Autonomy, held to proof - 목표와 예산만 받으면 Gemini가 필요한
-데이터를 선택하고, 정책 검사를 통과한 구매만 Solana Devnet에서 결제한 뒤
-온체인 영수증과 근거 보고서를 함께 남깁니다.
+목표와 예산을 받으면 Gemini가 필요한 데이터를 선택하고, 정책 검사를 통과한
+구매만 Solana Devnet에서 결제합니다. 결과에는 온체인 영수증과 근거 보고서가
+함께 남습니다.
 
 ## 타깃 사용자
 
 외부 데이터 비용을 통제하면서 반복 조사를 자동화하려는 리서처, AI 운영자,
-B2B SaaS 팀. MVP는 SOL/ETH 시장·개발 모멘텀 비교로 자율 증거 조달을 시연합니다.
+B2B SaaS 팀. SOL/ETH 시장·개발 모멘텀 비교를 통해 데이터 선택, 결제, 영수증
+기록까지 이어지는 흐름을 시연합니다.
 
 ## 해결 문제
 
 기존 AI 리서치 도구는 데이터를 추천하거나 호출하지만, 유료 자원을 왜 샀는지,
-예산과 자산 정책을 지켰는지, 실제로 정산되었는지를 하나의 감사 흐름으로
-증명하지 못합니다. 재시도 중 중복 결제와 결제 후 upstream 실패도 큰 위험입니다.
+예산과 자산 정책을 지켰는지, 정산되었는지를 한 기록에서 확인하기 어렵습니다.
+재시도 중 중복 결제와 결제 후 원본 API 장애도 주요 위험입니다.
 
 ## 해결 방식
 
 Gemini는 두 상품의 관련성과 가격만 비교합니다. 코드 정책이 URL, 네트워크,
 USDC mint, 가격, payee, 실행·일일 한도를 재검증하고 Firestore 트랜잭션으로
-예산을 예약합니다. x402 결제 후 결제 전에 고정한 snapshot을 반환하고, 거래
+예산을 예약합니다. x402 결제 후 결제 전에 고정한 스냅샷을 반환하고, 거래
 서명과 Explorer 링크를 근거에 묶습니다. 정산이 불명확하면 자동 재결제하지
 않고 reconciling으로 중지합니다.
 
@@ -54,20 +55,20 @@ USDC mint, 가격, payee, 실행·일일 한도를 재검증하고 Firestore 트
 
 - Vertex AI `gemini-3.5-flash`, Google ADK TypeScript, structured output
 - Cloud Run 단일 서비스, Firestore transactional quota, Secret Manager key
-- Gemini에는 키가 전달되지 않으며 chain-of-thought 대신 짧은 선택 요약만 공개
+- Gemini에는 결제 키를 전달하지 않고 관련성·가격·선택 이유만 구조화해 받음
 
 ## Solana / 결제 활용
 
 - x402 buyer + seller, payment-identifier extension
 - Solana Devnet CAIP-2 `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`
 - Circle Devnet USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
-- 실제 Devnet 거래 두 건과 Explorer 영수증: 검증 완료
+- Devnet 거래 두 건과 Explorer 영수증: 검증 완료
 
 ## 링크
 
 - GitHub: `https://github.com/jeonsavvy/REIN`
 - 소개서 PDF: `[Drive 공개 링크]`
-- 데모 영상(3분 이내): `[YouTube URL — 2분 23초 최종본 업로드 후 입력]`
+- 데모 영상(3분 이내): `[YouTube URL — 2분 24초 최종본 업로드 후 입력]`
 - 라이브 Cloud Run: `https://rein-vvwpcipqca-du.a.run.app`
 - Explorer 1: `https://explorer.solana.com/tx/NoNGYPThfsy8jx43CvHBeVwXx6Cm5T9eLLNuM2JNEKfBSYnZLveQThxeio9Y7Divs9CEpg6TXFyUrjPBAEpQyrd?cluster=devnet`
 - Explorer 2: `https://explorer.solana.com/tx/4Pw18BGdsvv7zo9WYsMXi3p5cCxhgrv5H3mNpa9hyyPopuAkDx18r48WcFor6CSEnNukbVCdJpgwPDXKrsAk7cbj?cluster=devnet`
@@ -80,6 +81,6 @@ USDC mint, 가격, payee, 실행·일일 한도를 재검증하고 Firestore 트
 
 - PDF에 타깃, 문제, 도입 시나리오, 아키텍처 다이어그램이 모두 있는가?
 - 새 환경에서 README만으로 실행되는가?
-- 영상이 3분 이내이며 실제 온체인 결제 전 과정을 보여주는가?
+- 영상이 3분 이내이며 Devnet 결제 전 과정을 보여주는가?
 - GitHub/Drive/YouTube/Cloud Run 링크가 시크릿 없이 공개 접근 가능한가?
 - 팀/연락처/소속/참석 가능 여부와 폼 약관을 사용자가 직접 검토했는가?

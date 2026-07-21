@@ -50,7 +50,7 @@ const STATUS_LABELS: Record<RunStatus | "idle", string> = {
   running: "조사 중",
   completed: "완료",
   denied: "정책 중단",
-  failed: "안전 중단",
+  failed: "실행 중단",
   reconciling: "결제 확인 중",
 };
 
@@ -457,13 +457,14 @@ export function ReinDashboard() {
         </h1>
         <div className="intro-support">
           <p>
-            비교할 주제와 최대 예산만 정하세요. REIN이 필요한 데이터를 고르고,
-            허용된 결제만 실행한 뒤 결과와 Solana 영수증을 함께 보여줍니다.
+            비교할 주제와 최대 예산을 정하면 REIN이 데이터 상품을 고르고, 정책을
+            통과한 결제만 실행합니다. 보고서에는 선택 이유와 Solana 영수증이 함께
+            남습니다.
           </p>
-          <ul aria-label="핵심 안전 장치">
-            <li>고정된 데이터 상품</li>
-            <li>코드로 검사하는 예산</li>
-            <li>테스트 USDC만 사용</li>
+          <ul aria-label="결제 제한">
+            <li>상품 2개 고정</li>
+            <li>예산·자산 코드 검증</li>
+            <li>Solana Devnet 영수증</li>
           </ul>
         </div>
       </section>
@@ -516,7 +517,7 @@ export function ReinDashboard() {
               <span>USDC</span>
             </div>
             <p id="budget-help" className={`field-help ${budgetError ? "error" : ""}`}>
-              {budgetError ?? "실제 가치가 없는 Circle 테스트 USDC만 사용합니다."}
+              {budgetError ?? "예산은 Circle Devnet USDC 기준입니다."}
             </p>
 
             <div className="budget-presets" aria-label="예산 빠른 선택">
@@ -607,7 +608,7 @@ export function ReinDashboard() {
           </form>
 
           <div className="safety-note">
-            <strong>결제 키는 정책 엔진만 사용합니다.</strong>
+            <strong>결제 키는 서버의 정책 엔진만 사용합니다.</strong>
             <p>
               Gemini는 고정 카탈로그 밖의 URL·가격·네트워크·자산을 선택할 수 없습니다.
             </p>
@@ -639,7 +640,7 @@ export function ReinDashboard() {
           {summary ? (
             <article className="result-spotlight" data-testid="research-report">
               <span className="result-label">
-                {mode === "live" ? "구매한 근거로 만든 결론" : "선택한 근거로 만든 데모 결론"}
+                {mode === "live" ? "구매한 근거로 만든 결론" : "데모 데이터로 만든 결론"}
               </span>
               <h3>{summary.headline}</h3>
               <p>{summary.executiveSummary}</p>
@@ -743,7 +744,7 @@ export function ReinDashboard() {
               <b>{events.length}개 기록</b>
             </summary>
             {events.length === 0 ? (
-              <p className="log-empty">조사를 시작하면 선택과 결제 기록이 여기에 쌓입니다.</p>
+              <p className="log-empty">조사를 시작하면 선택과 결제 기록이 생성됩니다.</p>
             ) : (
               <ol>
                 {events.map((event) => (
@@ -768,7 +769,7 @@ export function ReinDashboard() {
         <section className="receipt-section" id="receipts" aria-labelledby="receipt-title">
           <div className="wide-heading">
             <div>
-              <span>결제 증거</span>
+              <span>결제 내역</span>
               <h2 id="receipt-title">
                 {mode === "live" ? "Solana 영수증" : "데모 영수증"} {receipts.length}건
               </h2>
@@ -776,7 +777,7 @@ export function ReinDashboard() {
             <p>
               {mode === "live"
                 ? "각 거래를 Solana Explorer에서 직접 확인할 수 있습니다."
-                : "데모 영수증은 화면 흐름 검증용이며 블록체인 거래가 아닙니다."}
+                : "데모 영수증에는 블록체인 거래가 없습니다."}
             </p>
           </div>
           <div className="receipt-grid" data-testid="receipt-list">
@@ -829,9 +830,9 @@ export function ReinDashboard() {
           <div className="wide-heading">
             <div>
               <span>비교 결과</span>
-              <h2 id="evidence-title">데이터가 말해준 것</h2>
+              <h2 id="evidence-title">구매한 데이터로 본 결과</h2>
             </div>
-            <p>결론과 함께 데이터가 설명하지 못하는 범위도 그대로 남깁니다.</p>
+            <p>보고서에는 결론과 데이터 한계를 함께 기록합니다.</p>
           </div>
           <div className="finding-list">
             {summary.findings.map((finding, index) => (
@@ -865,7 +866,7 @@ export function ReinDashboard() {
       )}
 
       <footer className="footer">
-        <span>REIN · 실제 돈을 사용하지 않는 해커톤 데모</span>
+        <span>REIN · Autonomy, held to proof.</span>
         <span>Gemini 3.5 Flash · x402 · Solana Devnet · Cloud Run</span>
       </footer>
     </main>

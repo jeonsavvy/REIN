@@ -19,7 +19,7 @@ export const PRODUCT_DEFINITIONS: Record<ProductId, ProductDefinition> = {
     name: "시장 스냅샷",
     shortName: "시장 데이터",
     description:
-      "SOL과 ETH의 USD 가격, 24시간 변화율, 시가총액을 같은 시점으로 정규화합니다.",
+      "SOL과 ETH의 USD 가격, 24시간 변화율, 시가총액을 같은 시점에 비교합니다.",
     priceAtomic: "1000",
     sourceName: "CoinGecko Public API",
     sourceUrl: "https://api.coingecko.com/api/v3",
@@ -30,7 +30,7 @@ export const PRODUCT_DEFINITIONS: Record<ProductId, ProductDefinition> = {
     name: "GitHub 개발 활동",
     shortName: "개발 데이터",
     description:
-      "Solana Agave와 go-ethereum의 최근 커밋, stars, forks, issues를 비교합니다.",
+      "Solana Agave와 go-ethereum의 최근 커밋 수, 스타, 포크, 이슈를 비교합니다.",
     priceAtomic: "2000",
     sourceName: "GitHub Public API",
     sourceUrl: "https://api.github.com",

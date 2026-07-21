@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21T14:15:44.587068+00:00",
+  "generatedAt": "2026-07-21T15:20:56.482516+00:00",
   "engine": "Qwen3-TTS 12Hz 0.6B CustomVoice",
   "engineSource": "https://github.com/QwenLM/Qwen3-TTS",
   "engineCommit": "022e286b98fbec7e1e916cb940cdf532cd9f488e",
@@ -15,14 +15,14 @@
     {
       "id": "01",
       "path": "output/video/edit/narration/01.wav",
-      "durationSeconds": 11.52,
-      "sha256": "181BC0EA7338F280D748BC0CA2701AA416F88CD14F3804905939CF53AD005FCB"
+      "durationSeconds": 8.56,
+      "sha256": "C6133D9AC7CE9F1D7A2BAC5E0A5E86F995AA7DFF4952BE4B13DCDD905B971873"
     },
     {
       "id": "02",
       "path": "output/video/edit/narration/02.wav",
-      "durationSeconds": 8.56,
-      "sha256": "87AD8CA3C69ECEDD9400A09A8869EA03C3FF560767A845C0DB0421DCB3B49327"
+      "durationSeconds": 6.72,
+      "sha256": "5FF57D0DDDE48351866C9138640F215BACC957E717A9D8C8088615FE2F2A109F"
     },
     {
       "id": "03",
@@ -33,8 +33,8 @@
     {
       "id": "04",
       "path": "output/video/edit/narration/04.wav",
-      "durationSeconds": 14.16,
-      "sha256": "C9237F3490600E6DC3C8B52AFC652A6306BC13D3E6A9B17F9976D64DECB4986A"
+      "durationSeconds": 13.52,
+      "sha256": "8D02E86B836646BB185AE9002E70A716DFB9016B4736C5DCE2D9B45B49DA43AB"
     },
     {
       "id": "05",
@@ -45,32 +45,32 @@
     {
       "id": "06",
       "path": "output/video/edit/narration/06.wav",
-      "durationSeconds": 17.12,
-      "sha256": "211E5320A9C03CB93C3FFDC0FDE8580EB00D7E9309418570D508B562AC58C55A"
+      "durationSeconds": 14.96,
+      "sha256": "C179F9F01C949B07DB5F6137E4EAE6C1F18D2B5A81707F5C36530BC924CD316E"
     },
     {
       "id": "07",
       "path": "output/video/edit/narration/07.wav",
-      "durationSeconds": 10.32,
-      "sha256": "525CE81D4E99A2D76C8F0D47A8A0544F6BEFD13B843E1D6852C60E2154DC4062"
+      "durationSeconds": 9.36,
+      "sha256": "A9ACD6AA2FB5B3A1511438A7EFD95150D120FD8E5092AA0ADE1AF5B387132C9C"
     },
     {
       "id": "08",
       "path": "output/video/edit/narration/08.wav",
-      "durationSeconds": 12.16,
-      "sha256": "67DD4E2DB38B7AD6ECAC79DD36D533C5D4CB924E0B9495C6F6476605BAE3EEB2"
+      "durationSeconds": 9.2,
+      "sha256": "A50ED415D05CAFB84F412A2672F95A0E6D5C9800FBDAE71769A97E69D8B4A8B6"
     },
     {
       "id": "09",
       "path": "output/video/edit/narration/09.wav",
-      "durationSeconds": 14.48,
-      "sha256": "7BFC14F1203DBA57F1C364E869BFF24BA346DE0F28B2DA47994FE543AFF41758"
+      "durationSeconds": 12.96,
+      "sha256": "8A9C562084A6A461911A00F1EB534F3E797C3C44658E0AC95AD7A0562367D37A"
     },
     {
       "id": "10",
       "path": "output/video/edit/narration/10.wav",
-      "durationSeconds": 6.64,
-      "sha256": "0FB4316F6F17E6F23489D72061A826AFD0349BD885B2C29CCD18E10DDCC0DF97"
+      "durationSeconds": 7.68,
+      "sha256": "5C3916632A64782C8FA1190E4D08849E58D1E0CE3F56AF24F9ADE39C37DE7CE3"
     }
   ]
 }

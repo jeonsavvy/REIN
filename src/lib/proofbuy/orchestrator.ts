@@ -90,7 +90,7 @@ async function markFailure(
       ? "결제 확인이 필요합니다"
       : denied
         ? "예산 정책이 구매를 중단했습니다"
-        : "안전하게 실행을 중단했습니다",
+        : "실행을 중단했습니다",
     detail: `${detail.message} ${detail.recovery}`,
   });
 }
@@ -118,7 +118,7 @@ export async function executeRun(
       detail:
         run.mode === "live"
           ? "Gemini 3.5 Flash가 허용된 상품만 평가합니다."
-          : "안전한 demo mode입니다. 블록체인 거래를 서명하거나 전송하지 않습니다.",
+          : "데모 모드에서는 블록체인 거래를 서명하거나 전송하지 않습니다.",
     });
 
     const catalog = await catalogLoader(store);
@@ -178,15 +178,15 @@ export async function executeRun(
         throw new ProofBuyError({
           code: "UPSTREAM_UNAVAILABLE",
           message: `${selection.productId} 스냅샷이 만료되었거나 없습니다.`,
-          recovery: "새 run을 만들어 결제 전 스냅샷을 갱신하세요.",
+          recovery: "새 조사를 시작해 결제 전 스냅샷을 갱신하세요.",
         });
       }
       const snapshot = await store.getSnapshot(product.snapshotId);
       if (!snapshot || snapshot.productId !== selection.productId) {
         throw new ProofBuyError({
           code: "UPSTREAM_UNAVAILABLE",
-          message: `${selection.productId} 스냅샷 payload를 찾을 수 없습니다.`,
-          recovery: "새 run을 만들어 결제 전 스냅샷을 갱신하세요.",
+          message: `${selection.productId} 스냅샷 데이터를 찾을 수 없습니다.`,
+          recovery: "새 조사를 시작해 결제 전 스냅샷을 갱신하세요.",
         });
       }
       const payTo =
@@ -273,7 +273,7 @@ export async function executeRun(
           detail:
             run.mode === "live"
               ? "영수증과 Solana 거래 서명을 저장했습니다."
-              : "온체인 거래가 아닌 명시적 demo receipt를 저장했습니다.",
+              : "데모 영수증을 저장했습니다. 블록체인 거래는 생성되지 않았습니다.",
           productId: selection.productId,
           amountAtomic: product.priceAtomic,
           receipt: result.receipt,
@@ -282,7 +282,7 @@ export async function executeRun(
           type: "data.received",
           tone: "success",
           title: `${PRODUCT_DEFINITIONS[selection.productId].name}을 받았습니다`,
-          detail: `고정된 snapshot ${result.snapshot.id.slice(0, 24)}…을 보고서 근거에 추가했습니다.`,
+          detail: `고정된 스냅샷 ${result.snapshot.id.slice(0, 24)}…을 보고서 근거에 추가했습니다.`,
           productId: selection.productId,
         });
       } catch (error) {
