@@ -1,34 +1,38 @@
-REIN final verification 2026-07-21T20:31:56.0963588+09:00
+REIN final verification 2026-07-21T23:20:16.2553618+09:00
 
 === pnpm lint ===
+$ pnpm lint
 $ eslint .
 
 === pnpm typecheck ===
+$ pnpm typecheck
 $ tsc --noEmit
 
 === pnpm test ===
+$ pnpm test
 $ vitest run
 
  RUN  v4.1.0 C:/PROJECT/구글 클라우드 X 솔라나 AI Agentic 해커톤 지원
 
 
  Test Files  9 passed (9)
-      Tests  48 passed (48)
-   Start at  20:32:13
-   Duration  2.51s (transform 1.05s, setup 0ms, import 3.99s, tests 140ms, environment 1ms)
+      Tests  55 passed (55)
+   Start at  23:20:32
+   Duration  2.49s (transform 1.19s, setup 0ms, import 4.10s, tests 147ms, environment 1ms)
 
 
 === pnpm build ===
+$ pnpm build
 $ next build
 ▲ Next.js 16.2.10 (Turbopack)
 
   Creating an optimized production build ...
-✓ Compiled successfully in 5.9s
+✓ Compiled successfully in 5.6s
   Running TypeScript ...
-  Finished TypeScript in 7.0s ...
+  Finished TypeScript in 3.8s ...
   Collecting page data using 11 workers ...
   Generating static pages using 11 workers (0/3) ...
-✓ Generating static pages using 11 workers (3/3) in 805ms
+✓ Generating static pages using 11 workers (3/3) in 372ms
   Finalizing page optimization ...
 
 Route (app)
@@ -48,20 +52,21 @@ Route (app)
 
 
 === pnpm test:e2e ===
+$ pnpm test:e2e
 $ playwright test
 [WebServer] $ node scripts/start-standalone.mjs
 
 Running 8 tests using 2 workers
 
-  ok 1 [mobile] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.8s)
-  ok 2 [desktop] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.8s)
-  ok 4 [desktop] › tests\e2e\proofbuy.spec.ts:57:5 › shows a policy denial without attempting payment (1.6s)
-  ok 3 [mobile] › tests\e2e\proofbuy.spec.ts:57:5 › shows a policy denial without attempting payment (1.6s)
-  ok 5 [desktop] › tests\e2e\proofbuy.spec.ts:67:5 › protects paid resources with a 402 challenge and rejects unknown proof (31ms)
-  ok 6 [mobile] › tests\e2e\proofbuy.spec.ts:67:5 › protects paid resources with a 402 challenge and rejects unknown proof (28ms)
-  ok 7 [desktop] › tests\e2e\proofbuy.spec.ts:92:5 › replays persisted SSE events after a client reconnect (567ms)
-  ok 8 [mobile] › tests\e2e\proofbuy.spec.ts:92:5 › replays persisted SSE events after a client reconnect (633ms)
+  ok 1 [desktop] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.3s)
+  ok 2 [mobile] › tests\e2e\proofbuy.spec.ts:23:5 › runs the two-product demo and renders an explicit simulated receipt (1.6s)
+  ok 3 [desktop] › tests\e2e\proofbuy.spec.ts:60:5 › shows a policy denial without attempting payment (1.5s)
+  ok 5 [desktop] › tests\e2e\proofbuy.spec.ts:73:5 › protects paid resources with a 402 challenge and rejects unknown proof (17ms)
+  ok 4 [mobile] › tests\e2e\proofbuy.spec.ts:60:5 › shows a policy denial without attempting payment (1.6s)
+  ok 7 [mobile] › tests\e2e\proofbuy.spec.ts:73:5 › protects paid resources with a 402 challenge and rejects unknown proof (22ms)
+  ok 6 [desktop] › tests\e2e\proofbuy.spec.ts:98:5 › replays persisted SSE events after a client reconnect (595ms)
+  ok 8 [mobile] › tests\e2e\proofbuy.spec.ts:98:5 › replays persisted SSE events after a client reconnect (595ms)
 
-  8 passed (8.6s)
+  8 passed (6.3s)
 
 ALL REQUIRED CHECKS PASSED
