@@ -53,7 +53,7 @@ export function getX402Server(): x402ResourceServer {
       return { abort: true, reason: "Missing payment-identifier extension" };
     }
     const payment = await getStore().getPayment(paymentId);
-    if (!payment) return { abort: true, reason: "Unknown ProofBuy payment" };
+    if (!payment) return { abort: true, reason: "Unknown REIN payment" };
     const transport = context.transportContext as
       | {
           request?: {

@@ -2,12 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { DEFAULT_BUDGET_ATOMIC, DEMO_PRESET_GOAL } from "@/lib/proofbuy/constants";
-import { formatUsdcAtomic, safeSubtractAtomic } from "@/lib/proofbuy/amount";
+import Link from "next/link";
+import {
+  DEFAULT_BUDGET_ATOMIC,
+  DEMO_PRESET_GOAL,
+  MAX_RUN_ATOMIC,
+} from "@/lib/proofbuy/constants";
+import {
+  formatUsdcAtomic,
+  parseUsdcDisplay,
+  safeSubtractAtomic,
+} from "@/lib/proofbuy/amount";
 import type {
   CatalogProduct,
   PaymentReceipt,
+  ProductId,
   RunEvent,
+  RunStatus,
   RunView,
   RuntimeMode,
 } from "@/lib/proofbuy/types";
@@ -33,6 +44,30 @@ const TERMINAL_EVENTS = new Set<RunEvent["type"]>([
   "run.error",
 ]);
 
+const STATUS_LABELS: Record<RunStatus | "idle", string> = {
+  idle: "준비됨",
+  queued: "대기 중",
+  running: "조사 중",
+  completed: "완료",
+  denied: "정책 중단",
+  failed: "안전 중단",
+  reconciling: "결제 확인 중",
+};
+
+const PRODUCT_LABELS: Record<ProductId, string> = {
+  market_snapshot: "시장 데이터",
+  github_health: "개발 데이터",
+};
+
+type PhaseState = "waiting" | "active" | "done" | "warning" | "error";
+
+interface Phase {
+  id: "select" | "policy" | "payment" | "report";
+  title: string;
+  description: string;
+  state: PhaseState;
+}
+
 function Mark() {
   return (
     <svg viewBox="0 0 40 40" aria-hidden="true" className="brand-mark">
@@ -44,18 +79,15 @@ function Mark() {
   );
 }
 
-function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M4 10h11m-4-4 4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
-  );
-}
-
 function ExternalIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M6 3h7v7M13 3 6 10M12 9v4H3V4h4" fill="none" stroke="currentColor" strokeWidth="1.35" />
+      <path
+        d="M6 3h7v7M13 3 6 10M12 9v4H3V4h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.35"
+      />
     </svg>
   );
 }
@@ -63,12 +95,6 @@ function ExternalIcon() {
 function shorten(value: string, head = 9, tail = 7): string {
   if (value.length <= head + tail + 1) return value;
   return `${value.slice(0, head)}…${value.slice(-tail)}`;
-}
-
-function elapsedLabel(iso: string): string {
-  const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1_000));
-  if (seconds < 60) return `${seconds}s`;
-  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }
 
 function receiptFromEvents(events: RunEvent[]): PaymentReceipt[] {
@@ -79,9 +105,97 @@ function receiptFromEvents(events: RunEvent[]): PaymentReceipt[] {
   return [...byId.values()];
 }
 
+function formatObservedAt(value?: string): string {
+  if (!value) return "준비 중";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function phaseState(
+  events: RunEvent[],
+  status: RunStatus | "idle",
+  mode: RuntimeMode,
+): Phase[] {
+  const has = (type: RunEvent["type"]) => events.some((event) => event.type === type);
+  const failed = status === "failed" || status === "denied";
+  const reconciling = status === "reconciling";
+  const selectionDone = has("choice.explained") || has("policy.denied");
+  const policyDone = has("policy.approved");
+  const paymentStarted = has("payment.requested");
+  const paymentDone = has("data.received");
+  const reportDone = has("report.completed");
+
+  const selectState: PhaseState = selectionDone
+    ? "done"
+    : failed
+      ? "error"
+      : status === "running"
+        ? "active"
+        : "waiting";
+  const policyState: PhaseState = policyDone
+    ? "done"
+    : status === "denied"
+      ? "error"
+      : selectionDone && status === "running"
+        ? "active"
+        : "waiting";
+  const paymentState: PhaseState = reconciling
+    ? "warning"
+    : paymentDone
+      ? "done"
+      : failed && paymentStarted
+        ? "error"
+        : policyDone && status === "running"
+          ? "active"
+          : "waiting";
+  const reportState: PhaseState = reportDone
+    ? "done"
+    : failed && paymentDone
+      ? "error"
+      : paymentDone && status === "running"
+        ? "active"
+        : "waiting";
+
+  return [
+    {
+      id: "select",
+      title: "데이터 선택",
+      description: "목표와 관련 있는 상품만 고릅니다.",
+      state: selectState,
+    },
+    {
+      id: "policy",
+      title: "정책 검사",
+      description: "가격, 주소, 네트워크와 예산을 코드로 확인합니다.",
+      state: policyState,
+    },
+    {
+      id: "payment",
+      title: "결제 및 수령",
+      description:
+        mode === "live"
+          ? "테스트 USDC로 결제하고 고정된 데이터를 받습니다."
+          : "결제 과정을 시뮬레이션하고 고정된 데이터를 받습니다.",
+      state: paymentState,
+    },
+    {
+      id: "report",
+      title: "보고서 작성",
+      description: "구매한 근거만 사용해 결론과 한계를 정리합니다.",
+      state: reportState,
+    },
+  ];
+}
+
 export function ReinDashboard() {
   const [goal, setGoal] = useState(DEMO_PRESET_GOAL);
-  const [budget, setBudget] = useState(DEFAULT_BUDGET_ATOMIC);
+  const [budgetInput, setBudgetInput] = useState(
+    formatUsdcAtomic(DEFAULT_BUDGET_ATOMIC),
+  );
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [mode, setMode] = useState<RuntimeMode>("demo");
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -90,12 +204,31 @@ export function ReinDashboard() {
   const [view, setView] = useState<RunView>();
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>();
+  const [copied, setCopied] = useState<string>();
   const sourceRef = useRef<EventSource | null>(null);
+  const restoredRef = useRef(false);
+
+  const budgetAtomic = useMemo(() => {
+    try {
+      return parseUsdcDisplay(budgetInput, "budget");
+    } catch {
+      return undefined;
+    }
+  }, [budgetInput]);
+
+  const budgetError = useMemo(() => {
+    if (!budgetAtomic) return "USDC 금액을 소수점 여섯 자리 이내로 입력하세요.";
+    if (BigInt(budgetAtomic) > MAX_RUN_ATOMIC) {
+      return `한 번의 조사에는 최대 ${formatUsdcAtomic(MAX_RUN_ATOMIC.toString())} USDC까지 사용할 수 있습니다.`;
+    }
+    return undefined;
+  }, [budgetAtomic]);
 
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
     try {
       const response = await fetch("/api/catalog", { cache: "no-store" });
+      if (!response.ok) throw new Error("Catalog request failed");
       const body = (await response.json()) as {
         mode: RuntimeMode;
         products: CatalogProduct[];
@@ -109,38 +242,20 @@ export function ReinDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    let active = true;
-    fetch("/api/catalog", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Catalog request failed");
-        return (await response.json()) as {
-          mode: RuntimeMode;
-          products: CatalogProduct[];
-        };
-      })
-      .then((body) => {
-        if (!active) return;
-        setMode(body.mode);
-        setCatalog(body.products);
-      })
-      .catch(() => {
-        if (active) setCatalog([]);
-      })
-      .finally(() => {
-        if (active) setCatalogLoading(false);
-      });
-    return () => {
-      active = false;
-      sourceRef.current?.close();
-    };
-  }, []);
-
-  const refreshRun = useCallback(async (id: string) => {
+  const refreshRun = useCallback(async (id: string): Promise<boolean> => {
     const response = await fetch(`/api/runs/${encodeURIComponent(id)}`, {
       cache: "no-store",
     });
-    if (response.ok) setView((await response.json()) as RunView);
+    if (!response.ok) return false;
+    const body = (await response.json()) as RunView;
+    setView(body);
+    setEvents(body.events);
+    setMode(body.run.mode);
+    if (["completed", "denied", "failed", "reconciling"].includes(body.run.status)) {
+      sourceRef.current?.close();
+      setSubmitting(false);
+    }
+    return true;
   }, []);
 
   const connectToRun = useCallback(
@@ -169,8 +284,59 @@ export function ReinDashboard() {
     [refreshRun],
   );
 
+  useEffect(() => {
+    let active = true;
+    fetch("/api/catalog", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Catalog request failed");
+        return (await response.json()) as {
+          mode: RuntimeMode;
+          products: CatalogProduct[];
+        };
+      })
+      .then((body) => {
+        if (!active) return;
+        setMode(body.mode);
+        setCatalog(body.products);
+      })
+      .catch(() => {
+        if (active) setCatalog([]);
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
+      });
+    return () => {
+      active = false;
+      sourceRef.current?.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const id = new URL(window.location.href).searchParams.get("run");
+    if (!id) return;
+    const timer = window.setTimeout(() => {
+      setRunId(id);
+      setSubmitting(true);
+      void refreshRun(id).then((found) => {
+        if (!found) {
+          setSubmitting(false);
+          setFormError("이 주소에 저장된 조사 결과를 찾을 수 없습니다.");
+          return;
+        }
+        connectToRun(id);
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [connectToRun, refreshRun]);
+
   async function startRun(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!budgetAtomic || budgetError) {
+      setFormError(budgetError ?? "예산을 확인하세요.");
+      return;
+    }
     setFormError(undefined);
     setEvents([]);
     setView(undefined);
@@ -181,7 +347,7 @@ export function ReinDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           goal,
-          maxBudgetAtomic: budget,
+          maxBudgetAtomic: budgetAtomic,
           preset: goal === DEMO_PRESET_GOAL ? "SOL vs ETH momentum" : undefined,
         }),
       });
@@ -190,14 +356,43 @@ export function ReinDashboard() {
         error?: { message?: string };
       };
       if (!response.ok || !body.runId) {
-        throw new Error(body.error?.message ?? "Run을 시작할 수 없습니다.");
+        throw new Error(body.error?.message ?? "조사를 시작할 수 없습니다.");
       }
       setRunId(body.runId);
+      window.history.replaceState({}, "", `?run=${encodeURIComponent(body.runId)}`);
       connectToRun(body.runId);
+      window.setTimeout(() => {
+        document.getElementById("run-progress")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 80);
     } catch (error) {
       setSubmitting(false);
-      setFormError(error instanceof Error ? error.message : "Run start failed");
+      setFormError(
+        error instanceof Error ? error.message : "조사를 시작할 수 없습니다.",
+      );
     }
+  }
+
+  function resetRun() {
+    sourceRef.current?.close();
+    setRunId(undefined);
+    setEvents([]);
+    setView(undefined);
+    setSubmitting(false);
+    setFormError(undefined);
+    window.history.replaceState({}, "", window.location.pathname);
+    document.getElementById("research-brief")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  async function copyText(value: string, key: string) {
+    await navigator.clipboard.writeText(value);
+    setCopied(key);
+    window.setTimeout(() => setCopied((current) => (current === key ? undefined : current)), 1600);
   }
 
   const receipts = useMemo(() => {
@@ -208,8 +403,14 @@ export function ReinDashboard() {
 
   const spentAtomic =
     view?.run.spentAtomic ??
-    receipts.reduce((sum, receipt) => (BigInt(sum) + BigInt(receipt.amountAtomic)).toString(), "0");
-  const displayedBudget = view?.run.maxBudgetAtomic ?? budget;
+    receipts
+      .reduce(
+        (sum, receipt) => BigInt(sum) + BigInt(receipt.amountAtomic),
+        0n,
+      )
+      .toString();
+  const displayedBudget =
+    view?.run.maxBudgetAtomic ?? budgetAtomic ?? DEFAULT_BUDGET_ATOMIC;
   const remainingAtomic = useMemo(() => {
     try {
       return safeSubtractAtomic(displayedBudget, spentAtomic);
@@ -217,56 +418,69 @@ export function ReinDashboard() {
       return "0";
     }
   }, [displayedBudget, spentAtomic]);
-  const status = view?.run.status ?? (submitting ? "running" : "idle");
-  const lastEvent = events.at(-1);
-  const progress = events.length === 0 ? 0 : lastEvent?.type === "report.completed" ? 100 : Math.min(92, 12 + events.length * 9);
+  const status: RunStatus | "idle" =
+    view?.run.status ?? (submitting ? "running" : "idle");
   const summary = view?.run.summary;
+  const lastEvent = events.at(-1);
+  const phases = useMemo(() => phaseState(events, status, mode), [events, mode, status]);
+  const availableProducts = catalog.filter((product) => product.available);
+  const allProductsPrice = availableProducts
+    .reduce((total, product) => total + BigInt(product.priceAtomic), 0n)
+    .toString();
+  const runError = view?.run.error;
+  const runUrl = runId && typeof window !== "undefined" ? window.location.href : undefined;
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand-lockup">
+        <Link className="brand-lockup" href="/" aria-label="REIN 홈">
           <Mark />
-          <div>
-            <strong>REIN<sup>/</sup></strong>
-            <span>Policy-bound commerce</span>
-          </div>
-        </div>
+          <span className="brand-name">REIN</span>
+        </Link>
         <div className="topbar-meta">
           <span className={`mode-badge ${mode}`} data-testid="mode-badge">
-            <i /> {mode === "live" ? "SOLANA DEVNET · LIVE" : "DEMO MODE · NO ON-CHAIN TX"}
+            <i />
+            {mode === "live"
+              ? "Solana Devnet · 테스트 결제"
+              : "데모 · 온체인 전송 없음"}
           </span>
-          <span className="model-label">Gemini 3.5 Flash / Vertex AI</span>
+          <span className="model-label">Gemini 3.5 Flash</span>
         </div>
       </header>
 
       <section className="intro-band" aria-labelledby="page-title">
-        <div>
-          <p className="kicker">AGENT COMMERCE / CONTROL PLANE 01</p>
-          <h1 id="page-title">자율 구매에,<br /><em>증명의 고삐를.</em></h1>
-        </div>
-        <div className="intro-copy">
-          <p>목표와 상한만 정하세요. REIN은 필요한 데이터를 고르고, 정책을 통과한 구매만 실행한 뒤 모든 결정을 영수증으로 남깁니다.</p>
-          <span>AUTONOMY, HELD TO PROOF.</span>
-          <div className="intro-index" aria-label="REIN demo constraints">
-            <div><small>GOODS</small><b>02</b></div>
-            <div><small>DEFAULT LIMIT</small><b>0.003</b></div>
-            <div><small>SETTLEMENT</small><b>DEVNET</b></div>
-          </div>
+        <p className="product-label">예산을 지키는 AI 데이터 구매 에이전트</p>
+        <h1 id="page-title">
+          필요한 데이터를 사고,
+          <br />
+          <em>결제 근거까지 남깁니다.</em>
+        </h1>
+        <div className="intro-support">
+          <p>
+            비교할 주제와 최대 예산만 정하세요. REIN이 필요한 데이터를 고르고,
+            허용된 결제만 실행한 뒤 결과와 Solana 영수증을 함께 보여줍니다.
+          </p>
+          <ul aria-label="핵심 안전 장치">
+            <li>고정된 데이터 상품</li>
+            <li>코드로 검사하는 예산</li>
+            <li>테스트 USDC만 사용</li>
+          </ul>
         </div>
       </section>
 
-      <section className="operations-grid">
-        <aside className="request-panel panel-rule" aria-labelledby="request-title">
-          <div className="panel-heading">
-            <span>01</span>
+      <section className="workspace-grid" aria-label="REIN 조사 작업 공간">
+        <aside className="brief-panel" id="research-brief" aria-labelledby="brief-title">
+          <div className="section-heading">
             <div>
-              <p>REQUEST</p>
-              <h2 id="request-title">조사 주문서</h2>
+              <span>조사 설정</span>
+              <h2 id="brief-title">무엇을 알아볼까요?</h2>
             </div>
           </div>
+
           <form onSubmit={startRun}>
-            <label className="field-label" htmlFor="goal">Research goal</label>
+            <label className="field-label" htmlFor="goal">
+              조사 목표
+            </label>
             <textarea
               id="goal"
               value={goal}
@@ -274,167 +488,372 @@ export function ReinDashboard() {
               minLength={8}
               maxLength={500}
               disabled={submitting}
-              rows={6}
+              rows={5}
             />
-            <div className="field-topline">
-              <label className="field-label" htmlFor="budget">Hard budget</label>
-              <output>{formatUsdcAtomic(budget)} test USDC</output>
+
+            <label className="field-label budget-label" htmlFor="budget">
+              최대 예산
+            </label>
+            <div className={`budget-control ${budgetError ? "invalid" : ""}`}>
+              <input
+                id="budget"
+                value={budgetInput}
+                onChange={(event) =>
+                  setBudgetInput(event.target.value.replace(/[^\d.]/g, "").slice(0, 10))
+                }
+                inputMode="decimal"
+                disabled={submitting}
+                aria-describedby="budget-help"
+                aria-invalid={Boolean(budgetError)}
+              />
+              <span>USDC</span>
             </div>
-            <input
-              id="budget"
-              className="budget-input"
-              value={budget}
-              onChange={(event) => setBudget(event.target.value.replace(/\D/g, "").slice(0, 5) || "0")}
-              inputMode="numeric"
-              disabled={submitting}
-              aria-describedby="budget-help"
-            />
-            <p id="budget-help" className="field-help">Atomic units · 1 USDC = 1,000,000</p>
-            <div className="budget-presets" aria-label="Budget presets">
-              {["1000", "3000", "5000"].map((value) => (
+            <p id="budget-help" className={`field-help ${budgetError ? "error" : ""}`}>
+              {budgetError ?? "실제 가치가 없는 Circle 테스트 USDC만 사용합니다."}
+            </p>
+
+            <div className="budget-presets" aria-label="예산 빠른 선택">
+              {["0.001", "0.003", "0.005"].map((value) => (
                 <button
                   type="button"
                   key={value}
-                  onClick={() => setBudget(value)}
-                  className={budget === value ? "active" : ""}
+                  onClick={() => setBudgetInput(value)}
+                  className={budgetInput === value ? "active" : ""}
                   disabled={submitting}
                 >
-                  {formatUsdcAtomic(value)}
+                  {value} USDC
                 </button>
               ))}
             </div>
-            <button className="primary-action" disabled={submitting || goal.trim().length < 8} type="submit" data-testid="run-button">
-              <span>{submitting ? "Procurement running" : "Run procurement"}</span>
-              <ArrowIcon />
+
+            <div className="catalog-preview">
+              <div className="catalog-heading">
+                <span>구매 가능한 데이터</span>
+                <button
+                  type="button"
+                  onClick={() => void loadCatalog()}
+                  disabled={catalogLoading || submitting}
+                >
+                  새로고침
+                </button>
+              </div>
+              {catalogLoading ? (
+                <div className="catalog-loading" aria-label="데이터 상품 불러오는 중">
+                  <span />
+                  <span />
+                </div>
+              ) : catalog.length === 0 ? (
+                <div className="catalog-unavailable" role="status">
+                  <strong>데이터 소스를 불러오지 못했습니다.</strong>
+                  <span>잠시 후 새로고침해 주세요.</span>
+                </div>
+              ) : (
+                <div className="catalog-items">
+                  {catalog.map((product) => (
+                    <article className={!product.available ? "unavailable" : ""} key={product.id}>
+                      <div>
+                        <strong>{product.shortName}</strong>
+                        <span>{product.description}</span>
+                        <small>
+                          {product.available
+                            ? `${product.sourceName} · ${formatObservedAt(product.fetchedAt)} 기준`
+                            : product.unavailableReason ?? "현재 구매할 수 없습니다."}
+                        </small>
+                      </div>
+                      <b>{formatUsdcAtomic(product.priceAtomic)} USDC</b>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="purchase-preview">
+              <span>전체 구매 시</span>
+              <strong>{formatUsdcAtomic(allProductsPrice)} USDC</strong>
+            </div>
+
+            <button
+              className="primary-action"
+              disabled={
+                submitting ||
+                goal.trim().length < 8 ||
+                Boolean(budgetError) ||
+                availableProducts.length === 0
+              }
+              type="submit"
+              data-testid="run-button"
+            >
+              {submitting ? "조사하고 있습니다" : "이 예산으로 조사 시작"}
+              <span aria-hidden="true">→</span>
             </button>
-            {formError && <p className="inline-error" role="alert">{formError}</p>}
+            {formError && (
+              <p className="inline-error" role="alert">
+                {formError}
+              </p>
+            )}
           </form>
+
           <div className="safety-note">
-            <span className="safety-mark">R</span>
-            <p><strong>Policy holds the signing key.</strong> 모델은 키·주소·URL·가격을 만들 수 없습니다.</p>
+            <strong>결제 키는 정책 엔진만 사용합니다.</strong>
+            <p>
+              Gemini는 고정 카탈로그 밖의 URL·가격·네트워크·자산을 선택할 수 없습니다.
+            </p>
           </div>
         </aside>
 
-        <section className="ledger-panel panel-rule" aria-labelledby="ledger-title">
-          <div className="panel-heading ledger-heading">
-            <span>02</span>
+        <section className="run-panel" id="run-progress" aria-labelledby="progress-title">
+          <div className="run-heading">
             <div>
-              <p>LIVE LEDGER</p>
-              <h2 id="ledger-title">구매 결정 기록</h2>
+              <span>진행 상황</span>
+              <h2 id="progress-title">
+                {summary
+                  ? "조사가 끝났습니다"
+                  : status === "idle"
+                    ? "시작하면 네 단계로 진행됩니다"
+                    : "데이터 구매를 진행하고 있습니다"}
+              </h2>
             </div>
-            <div className={`run-status ${status}`} aria-live="polite">
-              <i /> {status.toUpperCase()}
-            </div>
+            <span
+              className={`status-pill ${status}`}
+              aria-live="polite"
+              data-testid="run-status"
+              data-status={status}
+            >
+              <i /> {STATUS_LABELS[status]}
+            </span>
           </div>
-          <div className="progress-track" aria-label={`Run progress ${progress}%`}>
-            <span style={{ width: `${progress}%` }} />
-          </div>
-          <div className="ledger-body" data-testid="event-ledger">
-            {events.length === 0 ? (
-              <div className="ledger-empty">
-                <div className="empty-sequence"><span>CATALOG</span><b /><span>POLICY</span><b /><span>PAYMENT</span><b /><span>PROOF</span></div>
-                <p>실행하면 모든 자율 결정과 금액이 여기에 순서대로 기록됩니다.</p>
+
+          {summary ? (
+            <article className="result-spotlight" data-testid="research-report">
+              <span className="result-label">
+                {mode === "live" ? "구매한 근거로 만든 결론" : "선택한 근거로 만든 데모 결론"}
+              </span>
+              <h3>{summary.headline}</h3>
+              <p>{summary.executiveSummary}</p>
+              <dl>
+                <div>
+                  <dt>총 지출</dt>
+                  <dd>{formatUsdcAtomic(spentAtomic)} USDC</dd>
+                </div>
+                <div>
+                  <dt>영수증</dt>
+                  <dd>{receipts.length}건</dd>
+                </div>
+                <div>
+                  <dt>남은 예산</dt>
+                  <dd>{formatUsdcAtomic(remainingAtomic)} USDC</dd>
+                </div>
+              </dl>
+              <div className="result-actions">
+                <a href="#receipts">영수증 확인</a>
+                {runUrl && (
+                  <button type="button" onClick={() => void copyText(runUrl, "run-url")}>
+                    {copied === "run-url" ? "주소 복사됨" : "결과 주소 복사"}
+                  </button>
+                )}
               </div>
+            </article>
+          ) : (
+            <div className="run-intro">
+              <p>
+                {lastEvent?.detail ??
+                  "모델의 내부 사고 과정은 숨기고, 구매 상품·가격·선택 이유와 검증 결과만 보여줍니다."}
+              </p>
+              <div className="budget-summary">
+                <div>
+                  <span>사용한 예산</span>
+                  <strong>{formatUsdcAtomic(spentAtomic)} USDC</strong>
+                </div>
+                <div>
+                  <span>최대 예산</span>
+                  <strong>{formatUsdcAtomic(displayedBudget)} USDC</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {runError && (
+            <div className={`recovery-panel ${status}`} role="alert">
+              <span>{runError.code === "INSUFFICIENT_DEVNET_BALANCE" ? "잔액 부족" : "실행 중단"}</span>
+              <h3>{runError.message}</h3>
+              <p>{runError.recovery}</p>
+              <div>
+                {runError.code === "INSUFFICIENT_DEVNET_BALANCE" && (
+                  <>
+                    <a href="https://faucet.solana.com/" target="_blank" rel="noreferrer">
+                      Devnet SOL 받기 <ExternalIcon />
+                    </a>
+                    <a
+                      href="https://faucet.circle.com/?allow=true"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      테스트 USDC 받기 <ExternalIcon />
+                    </a>
+                  </>
+                )}
+                <button type="button" onClick={resetRun}>
+                  새 조사 준비
+                </button>
+              </div>
+            </div>
+          )}
+
+          <ol className="phase-list" aria-label="조사 진행 단계">
+            {phases.map((phase, index) => (
+              <li key={phase.id} className={phase.state}>
+                <span className="phase-number">
+                  {phase.state === "done" ? "✓" : index + 1}
+                </span>
+                <div>
+                  <strong>{phase.title}</strong>
+                  <p>{phase.description}</p>
+                </div>
+                <span className="phase-state">
+                  {phase.state === "done"
+                    ? "완료"
+                    : phase.state === "active"
+                      ? "진행 중"
+                      : phase.state === "warning"
+                        ? "확인 필요"
+                        : phase.state === "error"
+                          ? "중단"
+                          : "대기"}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <details className="technical-log" open={status === "failed" || status === "reconciling"}>
+            <summary>
+              <span>실행 상세</span>
+              <b>{events.length}개 기록</b>
+            </summary>
+            {events.length === 0 ? (
+              <p className="log-empty">조사를 시작하면 선택과 결제 기록이 여기에 쌓입니다.</p>
             ) : (
-              <ol className="event-list">
+              <ol>
                 {events.map((event) => (
-                  <li key={event.id} className={`event-row ${event.tone}`}>
-                    <div className="event-index">{String(event.seq).padStart(2, "0")}</div>
-                    <div className="event-node"><span /></div>
-                    <div className="event-copy">
-                      <div className="event-title-line">
-                        <strong>{event.title}</strong>
-                        <time dateTime={event.at}>{elapsedLabel(event.at)}</time>
-                      </div>
+                  <li key={event.id} className={event.tone}>
+                    <span>{String(event.seq).padStart(2, "0")}</span>
+                    <div>
+                      <strong>{event.title}</strong>
                       <p>{event.detail}</p>
-                      {event.amountAtomic && <code>{formatUsdcAtomic(event.amountAtomic)} USDC</code>}
+                      {event.amountAtomic && (
+                        <code>{formatUsdcAtomic(event.amountAtomic)} USDC</code>
+                      )}
                     </div>
                   </li>
                 ))}
               </ol>
             )}
-          </div>
+          </details>
         </section>
+      </section>
 
-        <aside className="proof-panel" aria-labelledby="proof-title">
-          <div className="panel-heading">
-            <span>03</span>
+      {receipts.length > 0 && (
+        <section className="receipt-section" id="receipts" aria-labelledby="receipt-title">
+          <div className="wide-heading">
             <div>
-              <p>CONTROL</p>
-              <h2 id="proof-title">예산과 영수증</h2>
+              <span>결제 증거</span>
+              <h2 id="receipt-title">
+                {mode === "live" ? "Solana 영수증" : "데모 영수증"} {receipts.length}건
+              </h2>
             </div>
+            <p>
+              {mode === "live"
+                ? "각 거래를 Solana Explorer에서 직접 확인할 수 있습니다."
+                : "데모 영수증은 화면 흐름 검증용이며 블록체인 거래가 아닙니다."}
+            </p>
           </div>
-          <div className="budget-meter">
-            <p>SPENT / HARD LIMIT</p>
-            <div className="budget-numbers"><strong>{formatUsdcAtomic(spentAtomic)}</strong><span>/ {formatUsdcAtomic(displayedBudget)}</span></div>
-            <div className="meter-track"><span data-testid="budget-meter-fill" style={{ width: `${Math.min(100, Number((BigInt(spentAtomic) * 100n) / BigInt(displayedBudget === "0" ? "1" : displayedBudget)))}%` }} /></div>
-            <div className="budget-foot"><span>Remaining</span><b>{formatUsdcAtomic(remainingAtomic)} USDC</b></div>
-          </div>
-
-          <div className="catalog-list">
-            <div className="section-label"><span>AVAILABLE GOODS</span><button type="button" onClick={() => void loadCatalog()} disabled={catalogLoading}>Refresh</button></div>
-            {catalogLoading ? (
-              <div className="catalog-skeleton"><span /><span /></div>
-            ) : catalog.length === 0 ? (
-              <p className="rail-empty">Catalog unavailable</p>
-            ) : catalog.map((product) => (
-              <div className="catalog-row" key={product.id}>
-                <i className={product.available ? "available" : "unavailable"} />
-                <div><strong>{product.shortName}</strong><span>{product.available ? "Snapshot ready" : "Unavailable"}</span></div>
-                <code>{formatUsdcAtomic(product.priceAtomic)}</code>
-              </div>
-            ))}
-          </div>
-
-          <div className="receipt-list" data-testid="receipt-list">
-            <div className="section-label"><span>RECEIPTS</span><b>{receipts.length}</b></div>
-            {receipts.length === 0 ? <p className="rail-empty">결제 후 검증 가능한 영수증이 표시됩니다.</p> : receipts.map((receipt) => (
-              <article className="receipt" key={receipt.paymentId}>
-                <div className="receipt-top"><span>{receipt.mode === "live" ? "SETTLED" : "SIMULATED"}</span><strong>{formatUsdcAtomic(receipt.amountAtomic)} USDC</strong></div>
-                <code>{shorten(receipt.signature)}</code>
-                {receipt.explorerUrl ? (
-                  <a href={receipt.explorerUrl} target="_blank" rel="noreferrer">Solana Explorer <ExternalIcon /></a>
-                ) : <small>온체인 거래 아님</small>}
+          <div className="receipt-grid" data-testid="receipt-list">
+            {receipts.map((receipt) => (
+              <article className="receipt-card" key={receipt.paymentId}>
+                <div className="receipt-card-top">
+                  <div>
+                    <span>{receipt.mode === "live" ? "결제 완료" : "데모 기록"}</span>
+                    <h3>{PRODUCT_LABELS[receipt.productId]}</h3>
+                  </div>
+                  <strong>{formatUsdcAtomic(receipt.amountAtomic)} USDC</strong>
+                </div>
+                <dl>
+                  <div>
+                    <dt>보낸 주소</dt>
+                    <dd>{shorten(receipt.payer, 12, 9)}</dd>
+                  </div>
+                  <div>
+                    <dt>받는 주소</dt>
+                    <dd>{shorten(receipt.payee, 12, 9)}</dd>
+                  </div>
+                </dl>
+                <div className="signature-block">
+                  <span>거래 서명</span>
+                  <code>{receipt.signature}</code>
+                </div>
+                <div className="receipt-actions">
+                  {receipt.explorerUrl ? (
+                    <a href={receipt.explorerUrl} target="_blank" rel="noreferrer">
+                      Explorer에서 확인 <ExternalIcon />
+                    </a>
+                  ) : (
+                    <span>온체인 거래 아님</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void copyText(receipt.signature, receipt.paymentId)}
+                  >
+                    {copied === receipt.paymentId ? "복사됨" : "서명 복사"}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
-        </aside>
-      </section>
+        </section>
+      )}
 
-      <section className="evidence-section" aria-labelledby="evidence-title">
-        <div className="evidence-heading">
-          <div><p>04 / PURCHASED OUTPUT</p><h2 id="evidence-title">구매한 근거, 작성된 결론</h2></div>
-          {runId && <code>RUN {shorten(runId, 12, 6)}</code>}
-        </div>
-        {!summary ? (
-          <div className="evidence-empty">
-            <span>REPORT PENDING</span>
-            <p>{lastEvent?.detail ?? "자율 구매가 완료되면 원본 지표와 종합 보고서가 이 영역에 고정됩니다."}</p>
+      {summary && (
+        <section className="evidence-section" aria-labelledby="evidence-title">
+          <div className="wide-heading">
+            <div>
+              <span>비교 결과</span>
+              <h2 id="evidence-title">데이터가 말해준 것</h2>
+            </div>
+            <p>결론과 함께 데이터가 설명하지 못하는 범위도 그대로 남깁니다.</p>
           </div>
-        ) : (
-          <div className="report-grid" data-testid="research-report">
-            <article className="report-lead">
-              <span>EXECUTIVE BRIEF</span>
-              <h3>{summary.headline}</h3>
-              <p>{summary.executiveSummary}</p>
-              <small>Generated by {summary.generatedBy}</small>
-            </article>
-            <div className="finding-list">
-              {summary.findings.map((finding, index) => (
-                <article key={`${finding.label}-${index}`}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <div><p>{finding.label}</p><strong>{finding.value}</strong><small>{finding.interpretation}</small></div>
-                </article>
+          <div className="finding-list">
+            {summary.findings.map((finding, index) => (
+              <article key={`${finding.label}-${index}`}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>{finding.label}</p>
+                <strong>{finding.value}</strong>
+                <small>{finding.interpretation}</small>
+              </article>
+            ))}
+          </div>
+          <div className="evidence-meta">
+            <div className="provenance-list">
+              <h3>구매한 데이터</h3>
+              {view?.evidence.map((item) => (
+                <div key={item.snapshotId}>
+                  <strong>{PRODUCT_LABELS[item.productId]}</strong>
+                  <span>{formatObservedAt(item.data.asOf)} 기준</span>
+                  <code>{shorten(item.snapshotId, 16, 8)}</code>
+                </div>
               ))}
             </div>
-            <aside className="caveat-list"><p>LIMITS OF EVIDENCE</p>{summary.caveats.map((caveat) => <span key={caveat}>{caveat}</span>)}</aside>
+            <div className="caveat-list">
+              <h3>해석할 때 주의할 점</h3>
+              {summary.caveats.map((caveat) => (
+                <p key={caveat}>{caveat}</p>
+              ))}
+            </div>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <footer className="footer">
-        <span>REIN / GCP × SOLANA AI AGENTIC HACKATHON · 2026</span>
-        <span>x402 / Solana Devnet / Vertex AI / Cloud Run</span>
+        <span>REIN · 실제 돈을 사용하지 않는 해커톤 데모</span>
+        <span>Gemini 3.5 Flash · x402 · Solana Devnet · Cloud Run</span>
       </footer>
     </main>
   );

@@ -24,25 +24,28 @@ test("runs the two-product demo and renders an explicit simulated receipt", asyn
   page,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /자율 구매에/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /필요한 데이터를 사고/ })).toBeVisible();
   await expect(page.getByTestId("mode-badge")).toContainText(
-    "DEMO MODE · NO ON-CHAIN TX",
+    "데모 · 온체인 전송 없음",
   );
-  await expect(page.getByText("Snapshot ready")).toHaveCount(2);
+  await expect(page.getByText(/CoinGecko Public API/)).toBeVisible();
+  await expect(page.getByText(/GitHub Public API/)).toBeVisible();
+  await expect(page.getByLabel("최대 예산")).toHaveValue("0.003");
 
   await page.getByTestId("run-button").click();
   await expect(page.getByTestId("research-report")).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByTestId("receipt-list").getByText("SIMULATED")).toHaveCount(2);
+  await expect(page.getByTestId("receipt-list").getByText("데모 기록")).toHaveCount(2);
   await expect(page.getByTestId("receipt-list").getByText("온체인 거래 아님")).toHaveCount(2);
-  await expect(page.getByTestId("budget-meter-fill")).toHaveAttribute(
-    "style",
-    /width: 100%/,
-  );
-  await expect(page.getByRole("link", { name: /Solana Explorer/ })).toHaveCount(0);
-  await expect(page.getByText("3개 구매 근거로 보고서를 작성했습니다.")).toHaveCount(0);
-  await expect(page.getByText("2개 구매 근거로 보고서를 작성했습니다.")).toBeVisible();
+  await expect(page.getByTestId("research-report").getByText("0.003 USDC")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Explorer에서 확인/ })).toHaveCount(0);
+  await expect(page).toHaveURL(/\?run=run_/);
+
+  await page.reload();
+  await expect(page.getByTestId("research-report")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("receipt-list").getByText("데모 기록")).toHaveCount(2);
+  await expect(page.getByTestId("run-button")).toBeEnabled();
 
   const horizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -56,12 +59,15 @@ test("runs the two-product demo and renders an explicit simulated receipt", asyn
 
 test("shows a policy denial without attempting payment", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("Hard budget").fill("0");
+  await page.getByLabel("최대 예산").fill("0");
   await page.getByTestId("run-button").click();
-  await expect(page.getByText("Policy denied purchase")).toBeVisible({
-    timeout: 20_000,
-  });
-  await expect(page.getByTestId("receipt-list").getByText("SIMULATED")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", {
+      name: "현재 예산으로 구매 가능한 관련 데이터 상품이 없습니다.",
+    }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("정책 중단")).toBeVisible();
+  await expect(page.getByTestId("receipt-list")).toHaveCount(0);
 });
 
 test("protects paid resources with a 402 challenge and rejects unknown proof", async ({
@@ -81,8 +87,8 @@ test("protects paid resources with a 402 challenge and rejects unknown proof", a
     "/api/products/market-snapshot?snapshotId=not-granted",
     {
       headers: {
-        "x-proofbuy-payment-id": "unknown",
-        "x-proofbuy-demo-payment": "forged",
+        "x-rein-payment-id": "unknown",
+        "x-rein-demo-payment": "forged",
       },
     },
   );

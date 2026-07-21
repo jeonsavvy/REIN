@@ -87,10 +87,10 @@ async function markFailure(
         : "run.error",
     tone: reconciling ? "warning" : "danger",
     title: reconciling
-      ? "Settlement needs reconciliation"
+      ? "결제 확인이 필요합니다"
       : denied
-        ? "Policy denied purchase"
-        : "Run stopped safely",
+        ? "예산 정책이 구매를 중단했습니다"
+        : "안전하게 실행을 중단했습니다",
     detail: `${detail.message} ${detail.recovery}`,
   });
 }
@@ -114,7 +114,7 @@ export async function executeRun(
     await emit(store, run.id, {
       type: "run.started",
       tone: "pending",
-      title: "Procurement run started",
+      title: "조사를 시작했습니다",
       detail:
         run.mode === "live"
           ? "Gemini 3.5 Flash가 허용된 상품만 평가합니다."
@@ -126,7 +126,7 @@ export async function executeRun(
     await emit(store, run.id, {
       type: "catalog.loaded",
       tone: availableCount > 0 ? "neutral" : "warning",
-      title: "Catalog refreshed",
+      title: "구매 가능한 데이터를 확인했습니다",
       detail: `${availableCount}/${catalog.length}개 상품의 결제 전 스냅샷이 준비되었습니다.`,
     });
     if (availableCount === 0) {
@@ -147,7 +147,7 @@ export async function executeRun(
       await emit(store, run.id, {
         type: "choice.explained",
         tone: "neutral",
-        title: `${PRODUCT_DEFINITIONS[selection.productId].name} selected`,
+        title: `${PRODUCT_DEFINITIONS[selection.productId].name}을 선택했습니다`,
         detail: selection.rationale,
         productId: selection.productId,
         amountAtomic: PRODUCT_DEFINITIONS[selection.productId].priceAtomic,
@@ -165,7 +165,7 @@ export async function executeRun(
     await emit(store, run.id, {
       type: "policy.approved",
       tone: "success",
-      title: "Deterministic policy approved",
+      title: "예산 정책을 통과했습니다",
       detail: `${formatUsdcAtomic(totalAtomic)} 테스트 USDC가 ${formatUsdcAtomic(run.maxBudgetAtomic)} 한도 안에 있습니다.`,
       amountAtomic: totalAtomic,
     });
@@ -198,7 +198,7 @@ export async function executeRun(
           recovery: "Devnet 수취 주소를 Cloud Run 환경 변수로 설정하세요.",
         });
       }
-      const paymentId = generatePaymentId("proofbuy_");
+      const paymentId = generatePaymentId("rein_");
       const route = productRouteFor(selection.productId);
       const requestFingerprint = makePaymentFingerprint({
         method: "GET",
@@ -242,7 +242,7 @@ export async function executeRun(
       await emit(store, run.id, {
         type: "payment.requested",
         tone: "pending",
-        title: `HTTP 402 · ${PRODUCT_DEFINITIONS[selection.productId].shortName}`,
+        title: `${PRODUCT_DEFINITIONS[selection.productId].shortName} 결제를 요청했습니다`,
         detail: `${formatUsdcAtomic(product.priceAtomic)} 테스트 USDC 결제를 요청했습니다.`,
         productId: selection.productId,
         amountAtomic: product.priceAtomic,
@@ -268,8 +268,8 @@ export async function executeRun(
           tone: "success",
           title:
             run.mode === "live"
-              ? "Devnet payment settled"
-              : "Demo payment simulated",
+              ? "Devnet 결제가 완료됐습니다"
+              : "데모 결제를 기록했습니다",
           detail:
             run.mode === "live"
               ? "영수증과 Solana 거래 서명을 저장했습니다."
@@ -281,7 +281,7 @@ export async function executeRun(
         await emit(store, run.id, {
           type: "data.received",
           tone: "success",
-          title: `${PRODUCT_DEFINITIONS[selection.productId].name} received`,
+          title: `${PRODUCT_DEFINITIONS[selection.productId].name}을 받았습니다`,
           detail: `고정된 snapshot ${result.snapshot.id.slice(0, 24)}…을 보고서 근거에 추가했습니다.`,
           productId: selection.productId,
         });
@@ -310,7 +310,7 @@ export async function executeRun(
     await emit(store, run.id, {
       type: "report.completed",
       tone: "success",
-      title: "Evidence brief completed",
+      title: "비교 보고서를 완성했습니다",
       detail: `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,
     });
   } catch (error) {

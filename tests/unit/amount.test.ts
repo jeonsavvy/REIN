@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addAtomic,
   formatUsdcAtomic,
+  parseUsdcDisplay,
   parseAtomic,
   safeSubtractAtomic,
 } from "@/lib/proofbuy/amount";
@@ -31,6 +32,19 @@ describe("atomic USDC amounts", () => {
     expect(formatUsdcAtomic("1000")).toBe("0.001");
     expect(formatUsdcAtomic("1234567")).toBe("1.234567");
   });
+
+  it("parses a human-readable USDC amount into exact atomic units", () => {
+    expect(parseUsdcDisplay("0.003")).toBe("3000");
+    expect(parseUsdcDisplay("1")).toBe("1000000");
+    expect(parseUsdcDisplay("1.000001")).toBe("1000001");
+  });
+
+  it.each(["-1", ".003", "0.0000001", "1e-3", "01.0", ""]) (
+    "rejects an invalid human-readable USDC amount %j",
+    (value) => {
+      expect(() => parseUsdcDisplay(value)).toThrow("USDC amount");
+    },
+  );
 
   it("blocks underflow", () => {
     expect(safeSubtractAtomic("3000", "2000")).toBe("1000");

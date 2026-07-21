@@ -46,7 +46,7 @@ export async function GET(
       let lastSeq = 0;
       let lastHeartbeat = Date.now();
       const startedAt = Date.now();
-      controller.enqueue(encoder.encode(": proofbuy stream connected\n\n"));
+      controller.enqueue(encoder.encode(": rein stream connected\n\n"));
       const execution = claimed
         ? executeRun(id, { store, baseUrl })
         : Promise.resolve();

@@ -1,6 +1,7 @@
 import { USDC_DECIMALS } from "./constants";
 
 const ATOMIC_PATTERN = /^(0|[1-9]\d*)$/;
+const USDC_PATTERN = /^(?:0|[1-9]\d*)(?:\.(\d{0,6}))?$/;
 
 export function parseAtomic(value: string, field = "amount"): bigint {
   if (!ATOMIC_PATTERN.test(value)) {
@@ -20,6 +21,17 @@ export function formatUsdcAtomic(value: string): string {
   const fraction = (amount % scale).toString().padStart(USDC_DECIMALS, "0");
   const trimmed = fraction.replace(/0+$/, "");
   return `${whole.toString()}.${trimmed || "0"}`;
+}
+
+export function parseUsdcDisplay(value: string, field = "amount"): string {
+  const normalized = value.trim();
+  const match = USDC_PATTERN.exec(normalized);
+  if (!match) {
+    throw new Error(`${field} must be a non-negative USDC amount with up to 6 decimals`);
+  }
+  const [whole = "0"] = normalized.split(".");
+  const fraction = (match[1] ?? "").padEnd(USDC_DECIMALS, "0");
+  return (BigInt(whole) * 10n ** BigInt(USDC_DECIMALS) + BigInt(fraction || "0")).toString();
 }
 
 export function safeSubtractAtomic(left: string, right: string): string {

@@ -1,54 +1,84 @@
-# REIN Design Contract
+# REIN 디자인 계약
 
-Status: user-directed brand; implemented and visually verified at desktop and mobile widths
+상태: 2026-07-21 구현 및 데스크톱·모바일 픽셀 검토 완료
 
-## Design read
+## 제품 인상
 
-REIN is a proof-first autonomous-commerce instrument: the agent can move quickly,
-while policy keeps a short rein on spend. The UI should feel like a carefully
-typeset operating ledger, not a chatbot or speculative trading screen.
+REIN은 채팅봇이나 코인 트레이딩 화면이 아니다. 사용자가 목표와 예산을 건네면
+데이터를 구매하고 증거를 정리하는 **작은 조달 데스크**다. 화면은 기술을 과시하기보다
+“무엇을 샀고, 왜 승인됐고, 어디에서 결제를 확인할 수 있는가”를 빠르게 읽히게 한다.
 
-The primary visual move is **typography/content-led composition**. The supporting
-move is **one authored anchor**: two parallel reins resolving into an `R` mark.
-The mark and a restrained vermilion signal make the product memorable without
-competing with settlement-state emerald.
+브랜드의 핵심은 `REIN/` 워드마크와 한 번만 강하게 쓰는 vermilion 밑줄이다.
+Ghostty 같은 도구에서 참고한 것은 복제한 색이나 터미널 장식이 아니라, 기능과
+정체성이 같은 방향을 보는 절제된 태도다.
 
-## Page role and hierarchy
+## 정보 우선순위
 
-The single page must make five things immediately visible: the research goal,
-hard budget, current run state, evidence being purchased, and settlement proof.
-The primary action is `Run procurement`.
+첫 화면에서 다음 다섯 가지가 순서대로 이해되어야 한다.
 
-Desktop uses a 12-column operating desk: request panel (3), live ledger (6), and
-budget/receipts rail (3). Mobile stacks in decision order: request, status,
-ledger, spend, evidence.
+1. 이 서비스가 하는 일
+2. 조사 목표와 최대 예산
+3. 구매 가능한 데이터와 총가격
+4. 현재 네 단계 진행 상태
+5. 결론, 영수증, 근거와 한계
 
-## System
+완료 후에는 결론을 기술 로그보다 먼저 보여준다. 거래 서명은 복사와 Explorer
+확인이 쉬워야 하지만 본문보다 먼저 시선을 빼앗아서는 안 된다. 12개 내부 이벤트는
+`details` 안에 두고 문제가 생겼을 때만 자동으로 연다.
 
-- Brand: `REIN/`; line-mark derived from a rein pair and the letter `R`.
-- Promise: `Autonomy, held to proof.`
-- Type: Korean-capable system sans; tabular/transaction values use monospace.
-- Background: warm paper `#F0EDE4`; primary ink `#111A16`.
-- Brand signal: vermilion `#BD3F2B`, used only for identity and decisive action.
-- Settled: emerald `#08664B`; pending: ochre `#A86A10`; denied/error: brick
-  `#B43B2D`.
-- Surfaces: flat with precise 1px rules. Radius is reserved for inputs, buttons,
-  and status dots rather than every container.
-- Spacing: compact operational density on an 8px rhythm with 44px minimum
-  controls.
-- Motion: CSS-only state transitions; reduced-motion disables nonessential
-  animation.
+## 문장 원칙
 
-## Rejected defaults
+- 화면 기본 언어는 자연스러운 한국어다.
+- `control plane`, `ledger`, `artifact`처럼 사용자 행동을 설명하지 못하는 메타 용어를 쓰지 않는다.
+- 모델의 chain-of-thought는 노출하지 않고 상품, 관련성, 가격, 선택 이유 요약만 보여준다.
+- demo 기록과 실제 온체인 영수증을 같은 말로 부르지 않는다.
+- 오류에는 원인뿐 아니라 다음 안전한 행동을 적는다.
+- 단위 입력은 사람이 읽는 `0.003 USDC`, API 경계는 atomic 문자열로 구분한다.
 
-- No purple/cyan AI gradient, glass blur, or generic dashboard bento.
-- No dark terminal cosplay; the Ghostty reference means authored tool identity,
-  not copied pixels, colors, or chrome.
-- No decorative 3D/token art that displaces the policy and receipt proof.
+## 시각 시스템
 
-## State contract
+- 배경: warm paper `#F3F0E7`
+- 기본 글자: near-black navy `#101A17`
+- 주요 행동과 브랜드: vermilion `#C23F2A`
+- 완료와 결론: emerald `#087256`
+- 대기: amber, 거부·오류: red
+- 카드: 그림자나 glass blur 없이 1px 선과 충분한 여백으로 구분
+- 본문: 16px, 보조 설명: 14px, 거래·상태 메타: 최소 12px
+- 숫자·금액·거래 서명: monospace와 tabular number
+- 입력·버튼: 최소 44px 높이, 키보드 focus가 명확해야 함
 
-Render explicit idle, catalog loading, policy approved/denied, paying, settled,
-reconciling, upstream unavailable, insufficient Devnet balance, timeout, and
-completed states. Recovery text must name the next safe action and never imply a
-demo receipt is on-chain.
+넓은 화면은 설정과 실행을 나란히 둔다. 좁은 화면은 설명 → 입력 → 결과 → 진행
+단계 → 영수증 → 근거 순으로 한 열에 쌓는다. 모바일에서도 결과가 긴 실행 로그 뒤로
+밀리지 않아야 한다.
+
+## 대표 상태
+
+다음 상태를 각각 독립적으로 표현한다.
+
+- idle / catalog loading
+- policy approved / denied
+- paying / settled
+- upstream unavailable
+- insufficient Devnet balance
+- timeout
+- reconciling
+- completed
+
+`reconciling`은 “실패”로 단정하지 않으며 자동 재결제를 제안하지 않는다. 잔액 부족은
+Solana Faucet과 Circle Faucet으로 연결한다. demo 모드는 페이지 상단, 결과, 영수증에
+일관되게 표시한다.
+
+## 피하는 표현
+
+- 보라·청록 AI gradient, glassmorphism, 어두운 terminal cosplay
+- 의미 없이 잘게 쪼갠 bento card와 모든 영역에 붙는 radius
+- 작은 대문자 mono label, 반복되는 섹션 번호, 장식용 상태 백분율
+- “AI가 생각 중” 같은 내부 사고를 암시하는 연출
+- 실제로 존재하지 않는 제어 기능이나 실시간 인프라를 암시하는 문구
+- 영수증·예산·복구 방법보다 앞서는 토큰 또는 3D 장식
+
+## 검토 기준
+
+완료를 주장하기 전에 데스크톱과 390px 모바일을 실제 픽셀로 렌더한다. 겹침, 잘림,
+가로 스크롤, font fallback, 낮은 대비, 44px 미만 조작 영역, 결과의 과도한 하단 배치를
+확인한다. 핵심 상태는 Playwright로 검증하고 단순한 정적 목업으로 대신하지 않는다.

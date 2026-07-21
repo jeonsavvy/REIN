@@ -1,35 +1,32 @@
-# REIN Project Brief
+# REIN 프로젝트 브리프
 
-Status: implementation contract, 2026-07-21
+상태: 구현 계약, 2026-07-21
 
-## Product
+## 제품
 
-REIN is a solo-hackathon demonstration of agent-initiated commerce. A user
-sets a research goal and a hard spending ceiling. Gemini 3.5 Flash compares a
-small allowlisted catalog, chooses useful data, and purchases it with test USDC
-on Solana Devnet without another human approval step.
+REIN은 Agent-Initiated Commerce를 보여주는 1인 해커톤 프로젝트다. 사용자가 조사
+목표와 최대 예산을 정하면 Gemini 3.5 Flash가 허용된 데이터 상품을 비교하고,
+결정론적 정책을 통과한 구매만 Solana Devnet 테스트 USDC로 결제한다. 결과에는
+구매한 근거와 온체인 영수증이 함께 남는다.
 
-## User and job
+## 사용자와 해야 할 일
 
-- User: a researcher or operator who wants a compact evidence brief.
-- Job: buy only the evidence that materially improves the answer, within the
-  stated limit.
-- Costly failure: paying the wrong asset, exceeding budget, double-paying after
-  a retry, or showing a payment as settled without an on-chain receipt.
+- 사용자: 외부 데이터 비용을 통제하면서 짧은 근거 보고서를 받고 싶은 리서처·운영자
+- 해야 할 일: 답에 실제로 도움이 되는 근거만 정해진 예산 안에서 구매하기
+- 비싼 실패: 잘못된 자산 결제, 예산 초과, 재시도 중 중복 결제, 정산되지 않은 결제를 완료로 표시하기
 
-## Acceptance criteria
+## 완료 조건
 
-1. A run starts from one goal and an integer atomic-unit budget.
-2. The planner can select only `market_snapshot` and `github_health`.
-3. A deterministic gate enforces product, network, asset, per-purchase, per-run,
-   and daily limits before the signing boundary.
-4. Live mode uses Gemini 3.5 Flash on Vertex AI and x402 on Solana Devnet.
-5. Demo mode is visibly labelled and cannot sign or broadcast a transaction.
-6. The dashboard shows sanitized decisions, spend, evidence, and receipts.
-7. Tests prove policy boundaries, idempotency, hostile input handling, failure
-   states, and the primary browser flow.
+1. 화면은 조사 목표와 사람이 읽는 USDC 예산을 받고, API에서는 예산을 atomic 문자열로 검증한다.
+2. planner는 `market_snapshot`, `github_health`만 선택할 수 있다.
+3. 정책 엔진은 서명 전에 상품, URL, 네트워크, 자산, 수취 주소, 구매당·실행당·일일 상한을 검사한다.
+4. live 모드는 Vertex AI의 Gemini 3.5 Flash와 Solana Devnet x402를 사용한다.
+5. demo 모드는 눈에 띄게 표시되고 서명하거나 브로드캐스트하지 않는다.
+6. 대시보드는 선택 이유 요약, 예산, 네 단계 진행 상태, 근거, 데이터 한계, 영수증을 보여준다.
+7. 실행 결과는 URL에 `runId`를 남기고 새로고침 또는 SSE 재연결 후 복원된다.
+8. 테스트는 정책 경계, idempotency, 악성 입력, 실패 상태, 데스크톱·모바일 핵심 흐름을 증명한다.
 
-## Non-goals
+## 하지 않는 것
 
-No mainnet, real funds, arbitrary sellers, arbitrary URLs, accounts, subscriptions,
-multi-agent system, or production commerce claims.
+메인넷, 실제 자금, 임의 판매자·URL, 사용자 계정, 구독, 멀티에이전트, production
+commerce 주장은 MVP에 포함하지 않는다.

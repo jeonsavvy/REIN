@@ -154,8 +154,8 @@ export class DemoPaymentGateway implements PaymentGateway {
       signal: input.signal,
       cache: "no-store",
       headers: {
-        "x-proofbuy-demo-payment": demoProof,
-        "x-proofbuy-payment-id": input.payment.id,
+        "x-rein-demo-payment": demoProof,
+        "x-rein-payment-id": input.payment.id,
       },
     });
     if (!response.ok) {

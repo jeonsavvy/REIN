@@ -16,8 +16,8 @@ export const RUN_TIMEOUT_MS = 90_000;
 export const PRODUCT_DEFINITIONS: Record<ProductId, ProductDefinition> = {
   market_snapshot: {
     id: "market_snapshot",
-    name: "Market snapshot",
-    shortName: "Market",
+    name: "시장 스냅샷",
+    shortName: "시장 데이터",
     description:
       "SOL과 ETH의 USD 가격, 24시간 변화율, 시가총액을 같은 시점으로 정규화합니다.",
     priceAtomic: "1000",
@@ -27,8 +27,8 @@ export const PRODUCT_DEFINITIONS: Record<ProductId, ProductDefinition> = {
   },
   github_health: {
     id: "github_health",
-    name: "GitHub health",
-    shortName: "GitHub",
+    name: "GitHub 개발 활동",
+    shortName: "개발 데이터",
     description:
       "Solana Agave와 go-ethereum의 최근 커밋, stars, forks, issues를 비교합니다.",
     priceAtomic: "2000",

@@ -29,7 +29,7 @@ function productHandler(productId: ProductId) {
         status: 200,
         headers: {
           "Cache-Control": "private, no-store",
-          "X-ProofBuy-Snapshot": snapshot.id,
+          "X-REIN-Snapshot": snapshot.id,
         },
       },
     );
@@ -39,8 +39,8 @@ function productHandler(productId: ProductId) {
 function demoHandler(productId: ProductId) {
   const paidHandler = productHandler(productId);
   return async (request: NextRequest): Promise<NextResponse> => {
-    const paymentId = request.headers.get("x-proofbuy-payment-id");
-    const proof = request.headers.get("x-proofbuy-demo-payment");
+    const paymentId = request.headers.get("x-rein-payment-id");
+    const proof = request.headers.get("x-rein-demo-payment");
     if (!paymentId || !proof) {
       return NextResponse.json(
         {
