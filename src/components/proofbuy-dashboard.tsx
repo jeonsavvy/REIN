@@ -363,7 +363,7 @@ export function ReinDashboard() {
       connectToRun(body.runId);
       window.setTimeout(() => {
         document.getElementById("run-progress")?.scrollIntoView({
-          behavior: "smooth",
+          behavior: "auto",
           block: "start",
         });
       }, 80);
@@ -384,7 +384,7 @@ export function ReinDashboard() {
     setFormError(undefined);
     window.history.replaceState({}, "", window.location.pathname);
     document.getElementById("research-brief")?.scrollIntoView({
-      behavior: "smooth",
+      behavior: "auto",
       block: "start",
     });
   }
@@ -483,8 +483,11 @@ export function ReinDashboard() {
             </label>
             <textarea
               id="goal"
+              name="goal"
               value={goal}
               onChange={(event) => setGoal(event.target.value)}
+              autoComplete="off"
+              required
               minLength={8}
               maxLength={500}
               disabled={submitting}
@@ -497,11 +500,15 @@ export function ReinDashboard() {
             <div className={`budget-control ${budgetError ? "invalid" : ""}`}>
               <input
                 id="budget"
+                name="maxBudgetUsdc"
+                type="text"
                 value={budgetInput}
                 onChange={(event) =>
                   setBudgetInput(event.target.value.replace(/[^\d.]/g, "").slice(0, 10))
                 }
                 inputMode="decimal"
+                autoComplete="off"
+                required
                 disabled={submitting}
                 aria-describedby="budget-help"
                 aria-invalid={Boolean(budgetError)}
@@ -519,6 +526,7 @@ export function ReinDashboard() {
                   key={value}
                   onClick={() => setBudgetInput(value)}
                   className={budgetInput === value ? "active" : ""}
+                  aria-pressed={budgetInput === value}
                   disabled={submitting}
                 >
                   {value} USDC
@@ -538,7 +546,12 @@ export function ReinDashboard() {
                 </button>
               </div>
               {catalogLoading ? (
-                <div className="catalog-loading" aria-label="데이터 상품 불러오는 중">
+                <div
+                  className="catalog-loading"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="데이터 상품 불러오는 중"
+                >
                   <span />
                   <span />
                 </div>
@@ -583,7 +596,7 @@ export function ReinDashboard() {
               type="submit"
               data-testid="run-button"
             >
-              {submitting ? "조사하고 있습니다" : "이 예산으로 조사 시작"}
+              {submitting ? "조사하는 중…" : "이 예산으로 조사 시작"}
               <span aria-hidden="true">→</span>
             </button>
             {formError && (
@@ -657,7 +670,7 @@ export function ReinDashboard() {
             <div className="run-intro">
               <p>
                 {lastEvent?.detail ??
-                  "모델의 내부 사고 과정은 숨기고, 구매 상품·가격·선택 이유와 검증 결과만 보여줍니다."}
+                  "구매 전에 상품·가격·선택 이유와 정책 검사 결과를 확인합니다."}
               </p>
               <div className="budget-summary">
                 <div>

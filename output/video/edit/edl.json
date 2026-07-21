@@ -22,7 +22,7 @@
     },
     {
       "in": 133.627,
-      "out": 142.71,
+      "out": 142.867,
       "operation": "append_still",
       "source": "../../../artifacts/deck-render-rein/slide-1.png",
       "note": "REIN closing card"

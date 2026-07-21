@@ -2,11 +2,11 @@
 
 최종 업로드용 파일은 `edit/REIN-demo-final.mp4`다.
 
-- 2분 22.71초, 1920x1080, 30 fps, H.264 + AAC
+- 2분 22.87초, 1920x1080, 30 fps, H.264 + AAC
 - 영상에 번인한 한국어 자막과 별도 `edit/captions-ko.srt`
 - Qwen3-TTS 0.6B CustomVoice의 공식 한국어 화자 `Sohee`
 - 개인 음성 샘플과 음성 복제는 사용하지 않음
-- SHA-256: `343B5F718692B3BBF0F309DF25F8F7FA7FF56C6002C6405ABC293861F028FFD1`
+- SHA-256: `BE42DC514235728B091387CB1E192996BEA1E4E00A3776FD6C656137DA05CCF0`
 
 실행 버튼을 누른 뒤 보고서가 완성되고 두 Solana Explorer 페이지를 확인할
 때까지 하나의 실제 Cloud Run 실행을 순서 그대로 유지했다. 결제 장면을
@@ -30,8 +30,8 @@
 내레이션은 [QwenLM/Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)의
 `Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice`를 CPU에서 실행해 만들었다. 모델,
 revision, 화자, 라이선스와 각 WAV의 해시는 `edit/narration-manifest.json`에
-고정했다. `faster-whisper-small` 역전사 검사는 문장별 평균 0.973, 최종 믹스
-0.943의 정규화 유사도를 기록했다. 이는 발화 식별 가능성을 점검하는 자동 검사일
+고정했다. `faster-whisper-small` 역전사 검사는 문장별 평균 0.979, 최종 믹스
+0.975의 정규화 유사도를 기록했다. 이는 발화 식별 가능성을 점검하는 자동 검사일
 뿐, 주관적인 음질 평가를 대신하지 않는다.
 
 ## 다시 만들기
