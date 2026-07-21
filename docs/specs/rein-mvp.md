@@ -18,8 +18,9 @@ Status: accepted implementation specification
 ## Core flow
 
 1. Refresh and persist short-lived upstream snapshots before payment.
-2. Give Gemini only the normalized catalog, goal, and budget. Require a bounded
-   structured selection and short rationale; never expose chain-of-thought.
+2. Give Gemini only the normalized catalog, goal, and budget. Accept only a
+   strict allowlisted product-ID response, then derive a short observable
+   rationale without exposing chain-of-thought.
 3. Re-validate every selection with deterministic policy code.
 4. Atomically reserve run and daily quota using integer atomic units.
 5. Persist one logical payment identifier, quota day, snapshot hash, and request fingerprint.
@@ -29,8 +30,9 @@ Status: accepted implementation specification
 8. Persist the receipt before emitting `payment.settled`.
 9. Persist and display a deterministic evidence preview immediately after all
    payments settle, then ask Gemini to synthesize only from that evidence.
-10. Use minimal thinking for the two bounded structured calls. Planning and
-    report synthesis each have a 30-second deadline.
+10. Use minimal thinking for both bounded model calls. Planning uses a strict
+    allowlisted ID protocol within 20 seconds; structured report synthesis has a
+    30-second deadline.
 11. If Gemini planning is unavailable, a visibly degraded selector may use only
     the fixed catalog, goal keywords, and budget before the policy gate.
 

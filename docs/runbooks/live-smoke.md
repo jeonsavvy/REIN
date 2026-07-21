@@ -9,7 +9,7 @@ isolated wallet, and test assets.
 1. `GET /api/health` returns `mode: live`, `storage: firestore`, and
    `model: gemini-3.5-flash`.
 2. `GET /api/catalog` returns two available fresh snapshots.
-3. The default run returns two structured Gemini selections without hidden
+3. The default run returns two allowlisted Gemini product IDs without hidden
    reasoning or arbitrary fields.
 4. Policy approves exactly `3000` atomic test USDC.
 5. Both x402 requests settle once on

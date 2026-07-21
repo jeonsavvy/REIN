@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateResearchBriefSemantics } from "@/lib/proofbuy/planner";
+import {
+  parseModelProductIds,
+  validateResearchBriefSemantics,
+} from "@/lib/proofbuy/planner";
 import type { ResearchBrief } from "@/lib/proofbuy/types";
 
 function briefWith(interpretation: string): ResearchBrief {
@@ -34,6 +37,28 @@ describe("Gemini report semantic guard", () => {
     "스타 수는 개발자 관심도를 보여줍니다.",
   ])("rejects unsupported or evaluative language: %s", (claim) => {
     expect(() => validateResearchBriefSemantics(briefWith(claim))).toThrow(
+      "Gemini 응답 형식을 확인할 수 없습니다.",
+    );
+  });
+});
+
+describe("Gemini product ID protocol", () => {
+  it("parses only allowlisted product IDs", () => {
+    expect(parseModelProductIds(" market_snapshot,\n github_health ")).toEqual([
+      "market_snapshot",
+      "github_health",
+    ]);
+    expect(parseModelProductIds("NONE")).toEqual([]);
+  });
+
+  it.each([
+    "market_snapshot,market_snapshot",
+    "market_snapshot,https://example.com",
+    "market_ snapshot",
+    "Buy market_snapshot",
+    "",
+  ])("rejects malformed or invented model output: %s", (output) => {
+    expect(() => parseModelProductIds(output)).toThrow(
       "Gemini 응답 형식을 확인할 수 없습니다.",
     );
   });
