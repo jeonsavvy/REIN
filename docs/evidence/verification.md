@@ -99,9 +99,19 @@ Last updated: 2026-07-21 KST
   billing alerts, Devnet-only funds, and service/secret shutdown after judging;
   billing alerts do not block spend.
 
+## Public repository reproduction
+
+- Public repository: <https://github.com/jeonsavvy/REIN>, default branch `main`.
+- Published root commit:
+  `925472154e77cc2bfb268d6187c2847944f34d9f`.
+- A new `--depth 1` clone from GitHub successfully ran
+  `pnpm install --frozen-lockfile`, then `pnpm lint`, `pnpm typecheck`,
+  `pnpm test` (48/48), `pnpm build` (nine routes), and `pnpm test:e2e` (8/8).
+- Repository metadata points to the verified Cloud Run URL and uses the
+  `ai-agents`, `cloud-run`, `gemini`, `solana`, `vertex-ai`, and `x402` topics.
+
 ## Remaining submission evidence
 
-- Public GitHub clone/reproduction check.
 - Public YouTube URL and public Drive PDF URL.
 - User-owned identity/contact fields, terms acceptance, and Google Form submit.
 
