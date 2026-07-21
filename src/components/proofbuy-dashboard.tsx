@@ -449,7 +449,7 @@ export function ReinDashboard() {
       </header>
 
       <section className="intro-band" aria-labelledby="page-title">
-        <p className="product-label">정책과 예산 안에서 직접 결제하는 AI 데이터 조달</p>
+        <p className="product-label">예산 안에서 필요한 데이터를 직접 구매하는 AI 에이전트</p>
         <h1 id="page-title">
           목표와 예산만 정하면,
           <br />
