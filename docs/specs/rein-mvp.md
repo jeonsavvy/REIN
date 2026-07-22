@@ -64,18 +64,21 @@ Cloud Run live mode uses Firestore transactions.
 
 - Validation/policy failures are terminal `denied` runs with no reservation.
 - Upstream failure makes only that product unavailable.
+- A live planning-model failure stops before payment; deterministic selection is
+  never treated as a successful live agent decision.
 - A known failed payment releases reservation and records `failed`.
 - Timeout after payment submission records `reconciling`; it is not retried.
-- A report-only model timeout after settled payments falls back to a deterministic
-  report over the already purchased evidence and never starts another payment.
 - The deterministic report is visible while final Gemini synthesis is still
   running, so model latency never hides already purchased evidence or receipts.
 - Gemini receives repository commit observations without stars or forks. A
-  semantic guard rejects specified evaluative market language and omitted
-  popularity metrics before a model report can replace the deterministic result.
-- Live fallback reports are visibly marked as degraded. Up to two report-only
-  recovery attempts may reuse fully settled evidence; the recovery claim is
-  atomic and stale after 60 seconds.
+  semantic guard automatically requests one neutral rewrite when the first draft
+  contains evaluative language or omitted popularity metrics.
+- A live run completes only with a validated Gemini report. After two bounded
+  synthesis attempts fail, the run is `failed`; settled evidence and receipts
+  remain visible, while the deterministic preview is stored but not presented as
+  a completed result. No new payment is created.
+- Up to two user-triggered report-only recovery attempts may reuse fully settled
+  evidence; the recovery claim is atomic and stale after 60 seconds.
 - SSE reconnect replays stored events and does not claim a running/completed run.
 
 ## Verification

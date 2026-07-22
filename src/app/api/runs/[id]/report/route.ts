@@ -7,8 +7,8 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Leave response and Firestore overhead outside the model's 30-second deadline.
-export const maxDuration = 45;
+// Leave response and Firestore overhead outside two bounded model attempts.
+export const maxDuration = 50;
 
 export async function POST(
   _request: Request,

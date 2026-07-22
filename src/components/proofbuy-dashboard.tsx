@@ -124,7 +124,7 @@ function phaseState(
   events: RunEvent[],
   status: RunStatus | "idle",
   mode: RuntimeMode,
-  degradedReport: boolean,
+  reportNeedsRecovery: boolean,
 ): Phase[] {
   const has = (type: RunEvent["type"]) => events.some((event) => event.type === type);
   const failed = status === "failed" || status === "denied";
@@ -162,7 +162,7 @@ function phaseState(
           ? "active"
           : "waiting";
   const reportState: PhaseState = reportDone
-    ? degradedReport
+    ? reportNeedsRecovery
       ? "warning"
       : "done"
     : failed && paymentDone
@@ -468,11 +468,12 @@ export function ReinDashboard() {
   const status: RunStatus | "idle" =
     view?.run.status ?? (submitting ? "running" : "idle");
   const summary = view?.run.summary;
-  const usedFallbackReport =
+  const needsGeminiReport =
     mode === "live" &&
-    status === "completed" &&
+    Boolean(summary) &&
     (view?.run.reportMode === "fallback" ||
-      (!view?.run.reportMode && summary?.generatedBy === "REIN 규칙 기반 분석"));
+      (!view?.run.reportMode && summary?.generatedBy === "REIN 규칙 기반 분석") ||
+      (status === "failed" && view?.run.reportMode === "preview"));
   const reportPreview =
     mode === "live" &&
     status === "running" &&
@@ -482,8 +483,8 @@ export function ReinDashboard() {
     mode === "live" && view?.run.selectionMode === "rules";
   const lastEvent = events.at(-1);
   const phases = useMemo(
-    () => phaseState(events, status, mode, usedFallbackReport),
-    [events, mode, status, usedFallbackReport],
+    () => phaseState(events, status, mode, needsGeminiReport),
+    [events, mode, status, needsGeminiReport],
   );
   const availableProducts = catalog.filter((product) => product.available);
   const allProductsPrice = availableProducts
@@ -509,8 +510,8 @@ export function ReinDashboard() {
       reportAttempts < 2 &&
       view?.run.reportRecoveryState !== "running" &&
       view?.run.reportRecoveryState !== "succeeded" &&
-      (usedFallbackReport ||
-        (status === "failed" && hasRecoverablePaidEvidence)),
+      hasRecoverablePaidEvidence &&
+      (needsGeminiReport || status === "failed"),
   );
   const runUrl = runId && typeof window !== "undefined" ? window.location.href : undefined;
 
@@ -707,8 +708,10 @@ export function ReinDashboard() {
               <h2 id="progress-title">
                 {reportPreview
                   ? "결제는 끝났고 Gemini가 결과를 정리하고 있습니다"
-                  : usedFallbackReport
-                  ? "결제된 데이터로 결과를 보존했습니다"
+                  : needsGeminiReport
+                  ? "결제는 완료됐고 Gemini 보고서 작성이 필요합니다"
+                  : status === "failed"
+                    ? "조사를 완료하지 못했습니다"
                   : summary
                   ? "조사가 끝났습니다"
                   : status === "idle"
@@ -717,7 +720,7 @@ export function ReinDashboard() {
               </h2>
             </div>
             <span
-              className={`status-pill ${reportPreview ? "processing" : usedFallbackReport ? "degraded" : status}`}
+              className={`status-pill ${reportPreview ? "processing" : needsGeminiReport ? "degraded" : status}`}
               aria-live="polite"
               data-testid="run-status"
               data-status={status}
@@ -725,8 +728,8 @@ export function ReinDashboard() {
               <i />{" "}
               {reportPreview
                 ? "결제 완료 · 분석 중"
-                : usedFallbackReport
-                  ? "완료 · 규칙 기반"
+                : needsGeminiReport
+                  ? "Gemini 분석 필요"
                   : STATUS_LABELS[status]}
             </span>
           </div>
@@ -753,14 +756,15 @@ export function ReinDashboard() {
                   </div>
                 </div>
               )}
-              {usedFallbackReport && (
+              {needsGeminiReport && (
                 <div className="report-mode-notice" role="status">
                   <div>
-                    <strong>결제 완료 · 규칙 기반 결과</strong>
+                    <strong>Gemini 보고서를 완료하지 못했습니다</strong>
                     <p>
-                      Gemini가 제한 시간 안에 응답하지 않아 구매한 데이터는 REIN의
-                      계산 규칙으로 정리했습니다. 추가 결제는 발생하지 않았습니다.
+                      결제와 구매한 데이터는 보존했습니다. 기존 근거만 다시 분석하므로
+                      새 결제는 발생하지 않습니다.
                     </p>
+                    {runError && <small>{runError.message}</small>}
                     {reportRetryError && <small role="alert">{reportRetryError}</small>}
                   </div>
                   {canRetryReport && (
@@ -769,23 +773,31 @@ export function ReinDashboard() {
                       onClick={() => void retryReport()}
                       disabled={retryingReport}
                     >
-                      {retryingReport ? "Gemini 분석 중…" : "Gemini 분석만 다시 시도"}
+                      {retryingReport ? "Gemini 분석 중…" : "Gemini 보고서 다시 작성"}
                     </button>
                   )}
                 </div>
               )}
               <article className="result-spotlight" data-testid="research-report">
                 <span className="result-label">
-                  {usedFallbackReport
-                    ? "규칙 기반으로 보존한 결론"
+                  {needsGeminiReport
+                    ? "구매 데이터 보존"
                     : reportPreview
                       ? "구매 데이터를 먼저 계산한 결과"
                     : mode === "live"
                       ? "구매한 근거로 만든 결론"
                       : "데모 데이터로 만든 결론"}
                 </span>
-                <h3>{summary.headline}</h3>
-                <p>{summary.executiveSummary}</p>
+                <h3>
+                  {needsGeminiReport
+                    ? "결제한 데이터와 영수증을 보존했습니다"
+                    : summary.headline}
+                </h3>
+                <p>
+                  {needsGeminiReport
+                    ? "Gemini 보고서를 다시 작성하면 비교 결과가 여기에 표시됩니다."
+                    : summary.executiveSummary}
+                </p>
                 <dl>
                   <div>
                     <dt>총 지출</dt>
@@ -829,7 +841,7 @@ export function ReinDashboard() {
             </div>
           )}
 
-          {runError && (
+          {runError && !needsGeminiReport && (
             <div className={`recovery-panel ${status}`} role="alert">
               <span>{runError.code === "INSUFFICIENT_DEVNET_BALANCE" ? "잔액 부족" : "실행 중단"}</span>
               <h3>{runError.message}</h3>
@@ -978,7 +990,7 @@ export function ReinDashboard() {
         </section>
       )}
 
-      {summary && (
+      {summary && !needsGeminiReport && (
         <section className="evidence-section" aria-labelledby="evidence-title">
           <div className="wide-heading">
             <div>
@@ -1014,6 +1026,27 @@ export function ReinDashboard() {
                 <p key={caveat}>{caveat}</p>
               ))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {summary && needsGeminiReport && (
+        <section className="evidence-section" aria-labelledby="evidence-title">
+          <div className="wide-heading">
+            <div>
+              <span>결제된 근거</span>
+              <h2 id="evidence-title">구매한 데이터</h2>
+            </div>
+            <p>보고서를 다시 작성하기 전에도 스냅샷과 영수증을 확인할 수 있습니다.</p>
+          </div>
+          <div className="provenance-list">
+            {view?.evidence.map((item) => (
+              <div key={item.snapshotId}>
+                <strong>{PRODUCT_LABELS[item.productId]}</strong>
+                <span>{formatObservedAt(item.data.asOf)} 기준</span>
+                <code>{shorten(item.snapshotId, 16, 8)}</code>
+              </div>
+            ))}
           </div>
         </section>
       )}

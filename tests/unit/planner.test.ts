@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  generateValidatedResearchBrief,
   parseModelProductIds,
+  researchBriefSemanticViolations,
   validateResearchBriefSemantics,
 } from "@/lib/proofbuy/planner";
 import type { ResearchBrief } from "@/lib/proofbuy/types";
@@ -34,11 +36,32 @@ describe("Gemini report semantic guard", () => {
     "ETH 시장 캡이 더 큽니다.",
     "두 자산은 긍정적인 흐름입니다.",
     "Solana 개발이 더 활발합니다.",
+    "Solana 개발 활성도가 우위입니다.",
     "스타 수는 개발자 관심도를 보여줍니다.",
   ])("rejects unsupported or evaluative language: %s", (claim) => {
     expect(() => validateResearchBriefSemantics(briefWith(claim))).toThrow(
       "Gemini 응답 형식을 확인할 수 없습니다.",
     );
+  });
+
+  it("automatically rewrites one invalid draft before returning a report", async () => {
+    const invalid = briefWith("Solana 저장소의 개발 활성도가 우위입니다.");
+    const valid = briefWith(
+      "같은 30일 창에서 agave 100건 이상, go-ethereum 97건이 관찰되었습니다.",
+    );
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce(invalid)
+      .mockResolvedValueOnce(valid);
+
+    await expect(generateValidatedResearchBrief(generate)).resolves.toBe(valid);
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(generate.mock.calls[1]?.[0]).toMatchObject({
+      attempt: 2,
+      previousDraft: invalid,
+      violations: ["평가·순위 표현"],
+    });
+    expect(researchBriefSemanticViolations(valid)).toEqual([]);
   });
 });
 

@@ -109,7 +109,7 @@ export async function recoverRunReport(
       type: "report.retry_failed",
       tone: "warning",
       title: "Gemini 분석을 완료하지 못했습니다",
-      detail: `${detail.message} 결제와 기존 결과는 그대로 보존됩니다.`,
+      detail: `${detail.message} 결제와 구매 데이터는 그대로 보존됩니다.`,
     });
     throw error;
   }

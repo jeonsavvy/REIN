@@ -1,6 +1,10 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import {
+  DEVNET_USDC_MINT,
+  SOLANA_DEVNET,
+} from "@/lib/proofbuy/constants";
 import type { ResearchBrief, RunView } from "@/lib/proofbuy/types";
 
 const eventTypes = [
@@ -41,6 +45,28 @@ const fallbackSummary: ResearchBrief = {
 
 function fallbackRunView(summary: ResearchBrief = fallbackSummary): RunView {
   const now = "2026-07-22T00:00:00.000Z";
+  const receipts = [
+    {
+      paymentId: "payment_market",
+      productId: "market_snapshot" as const,
+      amountAtomic: "1000",
+    },
+    {
+      paymentId: "payment_github",
+      productId: "github_health" as const,
+      amountAtomic: "2000",
+    },
+  ].map((item) => ({
+    ...item,
+    decimals: 6 as const,
+    network: SOLANA_DEVNET,
+    asset: DEVNET_USDC_MINT,
+    payer: "demo-payer",
+    payee: "demo-payee",
+    signature: `signature_${item.paymentId}`,
+    settledAt: now,
+    mode: "live" as const,
+  }));
   return {
     run: {
       id: "fallback-ui",
@@ -50,6 +76,8 @@ function fallbackRunView(summary: ResearchBrief = fallbackSummary): RunView {
       spentAtomic: "3000",
       status: "completed",
       mode: "live",
+      selectionMode: "gemini",
+      reportMode: "fallback",
       nextEventSeq: 2,
       summary,
       createdAt: now,
@@ -67,8 +95,79 @@ function fallbackRunView(summary: ResearchBrief = fallbackSummary): RunView {
         at: now,
       },
     ],
-    payments: [],
-    evidence: [],
+    payments: receipts.map((receipt) => ({
+      id: receipt.paymentId,
+      runId: "fallback-ui",
+      productId: receipt.productId,
+      snapshotId: `snapshot_${receipt.productId}`,
+      snapshotHash: `hash_${receipt.productId}`,
+      quotaKey: "2026-07-22",
+      requestFingerprint: `fingerprint_${receipt.productId}`,
+      amountAtomic: receipt.amountAtomic,
+      network: SOLANA_DEVNET,
+      asset: DEVNET_USDC_MINT,
+      payTo: receipt.payee,
+      status: "settled" as const,
+      receipt,
+      createdAt: now,
+      updatedAt: now,
+    })),
+    evidence: [
+      {
+        productId: "market_snapshot",
+        snapshotId: "snapshot_market_snapshot",
+        data: {
+          kind: "market_snapshot",
+          asOf: now,
+          assets: [
+            {
+              symbol: "SOL",
+              priceUsd: 80,
+              change24hPct: 1,
+              marketCapUsd: 45_000_000_000,
+            },
+            {
+              symbol: "ETH",
+              priceUsd: 2_000,
+              change24hPct: 2,
+              marketCapUsd: 230_000_000_000,
+            },
+          ],
+        },
+        receipt: receipts[0],
+      },
+      {
+        productId: "github_health",
+        snapshotId: "snapshot_github_health",
+        data: {
+          kind: "github_health",
+          asOf: now,
+          repositories: [
+            {
+              ecosystem: "Solana",
+              repository: "anza-xyz/agave",
+              stars: 0,
+              forks: 0,
+              openIssues: 0,
+              commits30d: 100,
+              commits30dCapped: true,
+              pushedAt: now,
+            },
+            {
+              ecosystem: "Ethereum",
+              repository: "ethereum/go-ethereum",
+              stars: 0,
+              forks: 0,
+              openIssues: 0,
+              commits30d: 96,
+              commits30dCapped: false,
+              pushedAt: now,
+            },
+          ],
+        },
+        receipt: receipts[1],
+      },
+    ],
   };
 }
 
@@ -127,7 +226,7 @@ test("shows a policy denial without attempting payment", async ({ page }) => {
   await expect(page.getByTestId("receipt-list")).toHaveCount(0);
 });
 
-test("labels a preserved report and retries only Gemini analysis", async ({
+test("marks an incomplete Gemini report and retries without another payment", async ({
   page,
 }, testInfo) => {
   const geminiView = fallbackRunView({
@@ -135,6 +234,7 @@ test("labels a preserved report and retries only Gemini analysis", async ({
     headline: "Gemini가 다시 분석한 비교 결과",
     generatedBy: "Gemini 3.5 Flash",
   });
+  geminiView.run.reportMode = "gemini";
   geminiView.run.reportRecoveryState = "succeeded";
   geminiView.run.reportRecoveryAttempts = 1;
 
@@ -169,18 +269,85 @@ test("labels a preserved report and retries only Gemini analysis", async ({
   });
 
   await page.goto("/?run=fallback-ui");
-  await expect(page.getByText("결제 완료 · 규칙 기반 결과")).toBeVisible();
-  await expect(page.getByTestId("run-status")).toContainText("완료 · 규칙 기반");
-  await expect(page.getByText("추가 결제는 발생하지 않았습니다.")).toBeVisible();
+  await expect(page.getByText("Gemini 보고서를 완료하지 못했습니다")).toBeVisible();
+  await expect(page.getByTestId("run-status")).toContainText("Gemini 분석 필요");
+  await expect(page.getByText(/새 결제는 발생하지 않습니다/)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "결제한 데이터와 영수증을 보존했습니다" }),
+  ).toBeVisible();
+  await expect(page.getByText(fallbackSummary.headline)).toHaveCount(0);
+  await expect(page.getByText("ETH 우위")).toHaveCount(0);
+  await expect(page.getByText(fallbackSummary.caveats[0])).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "구매한 데이터", exact: true })).toBeVisible();
   await page.screenshot({
     path: path.resolve(`artifacts/qa/${testInfo.project.name}-fallback.png`),
     fullPage: true,
   });
 
-  await page.getByRole("button", { name: "Gemini 분석만 다시 시도" }).click();
+  await page.getByRole("button", { name: "Gemini 보고서 다시 작성" }).click();
   await expect(page.getByRole("heading", { name: "Gemini가 다시 분석한 비교 결과" })).toBeVisible();
-  await expect(page.getByText("결제 완료 · 규칙 기반 결과")).toHaveCount(0);
+  await expect(page.getByText("Gemini 보고서를 완료하지 못했습니다")).toHaveCount(0);
   await expect(page.getByTestId("run-status")).toContainText("완료");
+});
+
+test("shows one no-payment recovery action after a post-payment report failure", async ({
+  page,
+}) => {
+  const failed = fallbackRunView();
+  failed.run.id = "failed-report-ui";
+  failed.run.status = "failed";
+  failed.run.reportMode = "preview";
+  failed.run.error = {
+    code: "MODEL_ERROR",
+    message: "Gemini 응답 형식을 확인할 수 없습니다.",
+    recovery: "기존 근거로 분석만 다시 시도하세요.",
+  };
+  failed.events = [
+    {
+      ...failed.events[0],
+      id: "evt_preview",
+      seq: 1,
+      type: "report.preview_ready",
+      tone: "pending",
+      title: "구매 데이터를 먼저 정리했습니다",
+      detail: "Gemini가 최종 분석을 작성하고 있습니다.",
+    },
+    {
+      ...failed.events[0],
+      id: "evt_error",
+      seq: 2,
+      type: "run.error",
+      tone: "danger",
+      title: "실행을 중단했습니다",
+      detail: "Gemini 응답 형식을 확인할 수 없습니다.",
+    },
+  ];
+
+  await page.route("**/api/catalog", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ mode: "live", products: [] }),
+    });
+  });
+  await page.route("**/api/runs/failed-report-ui", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(failed),
+    });
+  });
+
+  await page.goto("/?run=failed-report-ui");
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Gemini 보고서를 완료하지 못했습니다" })
+      .getByText("Gemini 응답 형식을 확인할 수 없습니다."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Gemini 보고서 다시 작성" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "결제 없이 분석 다시 시도" })).toHaveCount(0);
+  await expect(page.getByText("ETH 우위")).toHaveCount(0);
 });
 
 test("shows purchased results while Gemini finishes the final report", async ({
@@ -189,7 +356,7 @@ test("shows purchased results while Gemini finishes the final report", async ({
   const preview = fallbackRunView();
   preview.run.status = "running";
   preview.run.reportMode = "preview";
-  preview.run.selectionMode = "rules";
+  preview.run.selectionMode = "gemini";
   preview.events[0] = {
     ...preview.events[0],
     type: "report.preview_ready",
@@ -225,7 +392,6 @@ test("shows purchased results while Gemini finishes the final report", async ({
 
   await page.goto("/?run=preview-ui");
   await expect(page.getByText("결제 완료 · Gemini 분석 중")).toBeVisible();
-  await expect(page.getByText("상품 선택 · 고정 규칙 사용")).toBeVisible();
   await expect(page.getByTestId("run-status")).toContainText(
     "결제 완료 · 분석 중",
   );

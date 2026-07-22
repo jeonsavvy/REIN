@@ -70,16 +70,6 @@ function selectedTotal(
     .toString();
 }
 
-function isRecoverableModelFailure(error: unknown): boolean {
-  if (error instanceof ProofBuyError) {
-    return error.detail.code === "MODEL_TIMEOUT" || error.detail.code === "MODEL_ERROR";
-  }
-  return (
-    error instanceof Error &&
-    (error.name === "AbortError" || error.name === "TimeoutError")
-  );
-}
-
 async function markFailure(
   store: ProofBuyStore,
   run: RunRecord,
@@ -153,32 +143,15 @@ export async function executeRun(
       });
     }
 
-    let selectionMode: "gemini" | "rules" = "gemini";
-    let plan: ProcurementPlan;
-    try {
-      plan = await planner.plan({
-        goal: run.goal,
-        maxBudgetAtomic: run.maxBudgetAtomic,
-        catalog,
-        signal,
-      });
-    } catch (error) {
-      if (run.mode !== "live" || !isRecoverableModelFailure(error)) throw error;
-      plan = await new DemoProcurementPlanner().plan({
-        goal: run.goal,
-        maxBudgetAtomic: run.maxBudgetAtomic,
-        catalog,
-      });
-      selectionMode = "rules";
-      await emit(store, run.id, {
-        type: "selection.fallback",
-        tone: "warning",
-        title: "상품 선택을 안전 규칙으로 이어갑니다",
-        detail:
-          "Gemini 응답이 늦어져 고정 카탈로그의 관련성과 예산만으로 평가했습니다.",
-      });
-    }
-    await store.updateRun(run.id, { selectionMode });
+    const plan: ProcurementPlan = await planner.plan({
+      goal: run.goal,
+      maxBudgetAtomic: run.maxBudgetAtomic,
+      catalog,
+      signal,
+    });
+    await store.updateRun(run.id, {
+      selectionMode: run.mode === "live" ? "gemini" : undefined,
+    });
     for (const selection of plan.selections) {
       await emit(store, run.id, {
         type: "choice.explained",
@@ -351,39 +324,22 @@ export async function executeRun(
       });
     }
 
-    let usedFallbackReport = false;
-    let brief: ResearchBrief;
-    try {
-      brief = await planner.synthesize({ goal: run.goal, evidence, signal });
-    } catch (error) {
-      if (run.mode !== "live" || evidence.length === 0) throw error;
-      const fallback =
-        fallbackBrief ??
-        (await new DemoProcurementPlanner().synthesize({
-          goal: run.goal,
-          evidence,
-        }));
-      brief = {
-        ...fallback,
-        caveats: [
-          ...fallback.caveats,
-          "Gemini 응답이 늦어져 결제된 데이터는 REIN의 규칙 기반 분석으로 정리했습니다.",
-        ],
-      };
-      usedFallbackReport = true;
-    }
+    const brief: ResearchBrief = await planner.synthesize({
+      goal: run.goal,
+      evidence,
+      signal,
+    });
     if (run.mode === "live" && brief.generatedBy !== "Gemini 3.5 Flash") {
-      usedFallbackReport = true;
+      throw new ProofBuyError({
+        code: "MODEL_ERROR",
+        message: "Gemini 최종 보고서를 확인할 수 없습니다.",
+        recovery: "구매 근거를 그대로 두고 Gemini 분석만 다시 시도하세요.",
+      });
     }
     await store.updateRun(run.id, {
       status: "completed",
       summary: brief,
-      reportMode:
-        run.mode === "live"
-          ? usedFallbackReport
-            ? "fallback"
-            : "gemini"
-          : undefined,
+      reportMode: run.mode === "live" ? "gemini" : undefined,
       reservedAtomic: "0",
       spentAtomic: evidence
         .map((item) => item.receipt.amountAtomic)
@@ -392,13 +348,9 @@ export async function executeRun(
     });
     await emit(store, run.id, {
       type: "report.completed",
-      tone: usedFallbackReport ? "warning" : "success",
-      title: usedFallbackReport
-        ? "결제된 데이터로 결과를 보존했습니다"
-        : "비교 보고서를 완성했습니다",
-      detail: usedFallbackReport
-        ? `${evidence.length}개 구매 근거를 규칙 기반으로 정리했습니다.`
-        : `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,
+      tone: "success",
+      title: "비교 보고서를 완성했습니다",
+      detail: `${evidence.length}개 구매 근거로 보고서를 작성했습니다.`,
     });
   } catch (error) {
     await markFailure(store, run, error);

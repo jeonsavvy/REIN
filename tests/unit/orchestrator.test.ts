@@ -123,7 +123,7 @@ describe("procurement orchestration", () => {
     expect(view?.payments[0]?.status).toBe("failed");
   });
 
-  it("completes from purchased evidence when report generation times out", async () => {
+  it("preserves paid evidence but does not complete when Gemini reporting fails", async () => {
     vi.stubEnv("SVM_PAY_TO", "4uZJ85RptKhsnVwRnUNsWm5iXwHLysSiyzufR45GeM7P");
     const run = await createClaimedRun(
       "SOL과 ETH의 개발·시장 모멘텀 비교",
@@ -153,15 +153,17 @@ describe("procurement orchestration", () => {
 
     const view = await store.getRunView(run.id);
     expect(purchase).toHaveBeenCalledTimes(2);
-    expect(view?.run.status).toBe("completed");
+    expect(view?.run.status).toBe("failed");
     expect(view?.run.spentAtomic).toBe("3000");
+    expect(view?.run.reservedAtomic).toBe("0");
     expect(view?.run.summary?.generatedBy).toBe("REIN 규칙 기반 분석");
-    expect(view?.run.summary?.caveats).toContain(
-      "Gemini 응답이 늦어져 결제된 데이터는 REIN의 규칙 기반 분석으로 정리했습니다.",
-    );
+    expect(view?.run.reportMode).toBe("preview");
+    expect(view?.run.error?.code).toBe("MODEL_TIMEOUT");
+    expect(view?.payments.every((payment) => payment.status === "settled")).toBe(true);
+    expect(view?.events.map((event) => event.type)).not.toContain("report.completed");
     expect(view?.events.at(-1)).toMatchObject({
-      type: "report.completed",
-      tone: "warning",
+      type: "run.error",
+      tone: "danger",
     });
   });
 
@@ -214,7 +216,7 @@ describe("procurement orchestration", () => {
     );
   });
 
-  it("uses a visible safe selection fallback when live Gemini planning times out", async () => {
+  it("stops before payment when live Gemini planning times out", async () => {
     vi.stubEnv("SVM_PAY_TO", "4uZJ85RptKhsnVwRnUNsWm5iXwHLysSiyzufR45GeM7P");
     const run = await createClaimedRun(
       "SOL과 ETH의 개발·시장 모멘텀 비교",
@@ -232,25 +234,23 @@ describe("procurement orchestration", () => {
       },
       synthesize: (input) => deterministicPlanner.synthesize(input),
     };
+    const gateway = successfulGateway();
+    const purchase = vi.fn(gateway.purchase);
 
     await executeRun(run.id, {
       store,
       planner,
-      gateway: successfulGateway(),
+      gateway: { purchase },
       catalogLoader: loadFixtureCatalog,
     });
 
     const view = await store.getRunView(run.id);
-    expect(view?.run.status).toBe("completed");
-    expect(view?.run.selectionMode).toBe("rules");
-    expect(view?.payments).toHaveLength(2);
-    expect(view?.events).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: "selection.fallback",
-          tone: "warning",
-        }),
-      ]),
+    expect(view?.run.status).toBe("failed");
+    expect(view?.run.selectionMode).toBeUndefined();
+    expect(purchase).not.toHaveBeenCalled();
+    expect(view?.payments).toEqual([]);
+    expect(view?.events.map((event) => event.type)).not.toContain(
+      "selection.fallback",
     );
   });
 
