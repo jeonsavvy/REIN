@@ -6,7 +6,7 @@ import { ExactSvmScheme } from "@x402/svm/exact/client";
 import { z } from "zod";
 import { DEVNET_USDC_MINT, SOLANA_DEVNET, USDC_DECIMALS } from "./constants";
 import { sha256 } from "./crypto";
-import { PolicyDeniedError, ProofBuyError } from "./errors";
+import { PolicyDeniedError, ReinError } from "./errors";
 import { validatePaymentCandidate } from "./policy";
 import type {
   PaymentReceipt,
@@ -57,9 +57,9 @@ function assertBaseUrl(baseUrl: string): URL {
   return url;
 }
 
-export function x402SettlementFailure(message: string): ProofBuyError {
+export function x402SettlementFailure(message: string): ReinError {
   const insufficient = /insufficient|balance/i.test(message);
-  return new ProofBuyError({
+  return new ReinError({
     code: insufficient ? "INSUFFICIENT_DEVNET_BALANCE" : "PAYMENT_FAILED",
     message: insufficient
       ? "Devnet SOL 또는 테스트 USDC 잔액이 부족합니다."
@@ -73,11 +73,11 @@ export function x402SettlementFailure(message: string): ProofBuyError {
 export function x402TransportFailure(
   error: unknown,
   paymentPayloadCreated: boolean,
-): ProofBuyError {
+): ReinError {
   const timedOut =
     error instanceof Error &&
     (error.name === "AbortError" || error.name === "TimeoutError");
-  return new ProofBuyError(
+  return new ReinError(
     {
       code: paymentPayloadCreated
         ? "PAYMENT_RECONCILING"
@@ -141,7 +141,7 @@ export class DemoPaymentGateway implements PaymentGateway {
     const url = resourceUrl(input.baseUrl, input.payment);
     const challenge = await fetch(url, { signal: input.signal, cache: "no-store" });
     if (challenge.status !== 402) {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "PAYMENT_FAILED",
         message: "데모 유료 경로가 HTTP 402 결제 요구를 반환하지 않았습니다.",
         recovery: "결제 경로 상태를 확인한 뒤 다시 실행하세요.",
@@ -159,7 +159,7 @@ export class DemoPaymentGateway implements PaymentGateway {
       },
     });
     if (!response.ok) {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "PAYMENT_FAILED",
         message: `데모 결제 재시도가 ${response.status}로 거부되었습니다.`,
         recovery: "새 조사를 시작해 payment ID와 스냅샷을 다시 생성하세요.",
@@ -194,7 +194,7 @@ export class LiveX402PaymentGateway implements PaymentGateway {
   }): Promise<PaymentResult> {
     const expectedBaseUrl = process.env.APP_BASE_URL;
     if (!expectedBaseUrl) {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "PAYMENT_FAILED",
         message: "결제 서비스 주소가 준비되지 않았습니다.",
         recovery: "서비스 상태를 확인한 뒤 다시 실행하세요.",
@@ -210,7 +210,7 @@ export class LiveX402PaymentGateway implements PaymentGateway {
     }
     const privateKey = process.env.SVM_PRIVATE_KEY;
     if (!privateKey) {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "PAYMENT_FAILED",
         message: "Devnet 결제 지갑이 준비되지 않았습니다.",
         recovery: "결제 서비스 상태를 확인한 뒤 다시 실행하세요.",
@@ -297,7 +297,7 @@ export class LiveX402PaymentGateway implements PaymentGateway {
         },
       };
     } catch (error) {
-      if (error instanceof ProofBuyError) throw error;
+      if (error instanceof ReinError) throw error;
       throw x402TransportFailure(error, paymentPayloadCreated);
     }
   }

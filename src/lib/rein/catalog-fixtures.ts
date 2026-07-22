@@ -1,6 +1,6 @@
 import { PRODUCT_DEFINITIONS, PRODUCT_IDS, SNAPSHOT_TTL_MS } from "./constants";
 import { createId, sha256 } from "./crypto";
-import type { ProofBuyStore } from "./storage";
+import type { ReinStore } from "./storage";
 import type { CatalogProduct, ProductId, Snapshot, SnapshotData } from "./types";
 
 function fixtureData(productId: ProductId): SnapshotData {
@@ -53,7 +53,7 @@ function fixtureData(productId: ProductId): SnapshotData {
 }
 
 export async function loadFixtureCatalog(
-  store: ProofBuyStore,
+  store: ReinStore,
 ): Promise<CatalogProduct[]> {
   const products: CatalogProduct[] = [];
   for (const productId of PRODUCT_IDS) {

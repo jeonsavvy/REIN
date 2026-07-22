@@ -5,7 +5,7 @@ import {
   SNAPSHOT_TTL_MS,
 } from "./constants";
 import { createId, sha256 } from "./crypto";
-import type { ProofBuyStore } from "./storage";
+import type { ReinStore } from "./storage";
 import type {
   CatalogProduct,
   GithubHealthData,
@@ -164,7 +164,7 @@ async function createSnapshot(
 }
 
 async function refreshProduct(
-  store: ProofBuyStore,
+  store: ReinStore,
   productId: ProductId,
   fetcher: FetchLike,
 ): Promise<CatalogProduct> {
@@ -195,7 +195,7 @@ async function refreshProduct(
 }
 
 export async function refreshCatalog(
-  store: ProofBuyStore,
+  store: ReinStore,
   fetcher: FetchLike = fetch,
 ): Promise<CatalogProduct[]> {
   return Promise.all(
@@ -204,10 +204,10 @@ export async function refreshCatalog(
 }
 
 export async function loadCatalog(
-  store: ProofBuyStore,
+  store: ReinStore,
   fetcher: FetchLike = fetch,
 ): Promise<CatalogProduct[]> {
-  if (process.env.PROOFBUY_UPSTREAM_MODE === "fixture") {
+  if (process.env.REIN_UPSTREAM_MODE === "fixture") {
     const { loadFixtureCatalog } = await import("./catalog-fixtures");
     return loadFixtureCatalog(store);
   }

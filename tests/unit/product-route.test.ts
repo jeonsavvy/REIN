@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalProductUrl } from "@/lib/proofbuy/public-origin";
+import { canonicalProductUrl } from "@/lib/rein/public-origin";
 
 describe("canonicalProductUrl", () => {
   it("replaces the internal Cloud Run origin without changing the paid resource", () => {

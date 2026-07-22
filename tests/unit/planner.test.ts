@@ -4,8 +4,8 @@ import {
   parseModelProductIds,
   researchBriefSemanticViolations,
   validateResearchBriefSemantics,
-} from "@/lib/proofbuy/planner";
-import type { ResearchBrief } from "@/lib/proofbuy/types";
+} from "@/lib/rein/planner";
+import type { ResearchBrief } from "@/lib/rein/types";
 
 function briefWith(interpretation: string): ResearchBrief {
   return {

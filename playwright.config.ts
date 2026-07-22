@@ -21,9 +21,9 @@ export default defineConfig({
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
     env: {
-      PROOFBUY_MODE: "demo",
-      PROOFBUY_STORAGE: "memory",
-      PROOFBUY_UPSTREAM_MODE: "fixture",
+      REIN_MODE: "demo",
+      REIN_STORAGE: "memory",
+      REIN_UPSTREAM_MODE: "fixture",
       APP_BASE_URL: `http://127.0.0.1:${port}`,
       HOSTNAME: "127.0.0.1",
       PORT: String(port),

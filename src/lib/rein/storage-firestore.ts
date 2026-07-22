@@ -12,7 +12,7 @@ import {
   MAX_REPORT_RECOVERY_ATTEMPTS,
   REPORT_RECOVERY_STALE_MS,
 } from "./constants";
-import type { NewRunEvent, ProofBuyStore } from "./storage";
+import type { NewRunEvent, ReinStore } from "./storage";
 import type {
   NewRunInput,
   PaymentReceipt,
@@ -35,7 +35,7 @@ function requireData<T>(value: T | undefined, message: string): T {
   return value;
 }
 
-export class FirestoreProofBuyStore implements ProofBuyStore {
+export class FirestoreReinStore implements ReinStore {
   private readonly db: Firestore;
 
   constructor() {

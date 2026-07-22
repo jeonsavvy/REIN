@@ -5,7 +5,7 @@ import {
   parseUsdcDisplay,
   parseAtomic,
   safeSubtractAtomic,
-} from "@/lib/proofbuy/amount";
+} from "@/lib/rein/amount";
 
 describe("atomic USDC amounts", () => {
   it("keeps boundary values as exact integer strings", () => {

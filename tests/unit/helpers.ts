@@ -2,14 +2,14 @@ import {
   DEVNET_USDC_MINT,
   PRODUCT_DEFINITIONS,
   SOLANA_DEVNET,
-} from "@/lib/proofbuy/constants";
-import { kstDateKey } from "@/lib/proofbuy/storage";
+} from "@/lib/rein/constants";
+import { kstDateKey } from "@/lib/rein/storage";
 import type {
   CatalogProduct,
   PaymentReceipt,
   PaymentRecord,
   ProductId,
-} from "@/lib/proofbuy/types";
+} from "@/lib/rein/types";
 
 export function availableCatalog(): CatalogProduct[] {
   return Object.values(PRODUCT_DEFINITIONS).map((product) => ({

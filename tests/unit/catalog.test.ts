@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
-import { refreshCatalog } from "@/lib/proofbuy/catalog";
-import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
+import { loadFixtureCatalog } from "@/lib/rein/catalog-fixtures";
+import { refreshCatalog } from "@/lib/rein/catalog";
+import { MemoryReinStore } from "@/lib/rein/storage-memory";
 
-const store = new MemoryProofBuyStore();
+const store = new MemoryReinStore();
 
 describe("catalog snapshot availability", () => {
   beforeEach(async () => {

@@ -24,9 +24,9 @@ if ([string]::IsNullOrWhiteSpace($ServiceAccount)) {
 }
 
 $envVars = @(
-  "PROOFBUY_MODE=live",
-  "PROOFBUY_STORAGE=firestore",
-  "PROOFBUY_UPSTREAM_MODE=live",
+  "REIN_MODE=live",
+  "REIN_STORAGE=firestore",
+  "REIN_UPSTREAM_MODE=live",
   "GOOGLE_CLOUD_PROJECT=$ProjectId",
   "GOOGLE_CLOUD_LOCATION=global",
   "GOOGLE_GENAI_USE_VERTEXAI=true",

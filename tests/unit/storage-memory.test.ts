@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
+import { MemoryReinStore } from "@/lib/rein/storage-memory";
 import { paymentReceipt, paymentRecord } from "./helpers";
 
-const store = new MemoryProofBuyStore();
+const store = new MemoryReinStore();
 
 async function runningRun(maxBudgetAtomic = "10000") {
   const run = await store.createRun({

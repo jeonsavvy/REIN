@@ -15,7 +15,7 @@ export type NewRunEvent = Omit<RunEvent, "id" | "seq" | "at"> & {
   at?: string;
 };
 
-export interface ProofBuyStore {
+export interface ReinStore {
   createRun(input: NewRunInput): Promise<RunRecord>;
   getRun(runId: string): Promise<RunRecord | undefined>;
   claimRun(runId: string, claimId: string): Promise<boolean>;

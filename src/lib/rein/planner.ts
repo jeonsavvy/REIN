@@ -6,7 +6,7 @@ import {
   MODEL_REPORT_TIMEOUT_MS,
   PRODUCT_DEFINITIONS,
 } from "./constants";
-import { ProofBuyError } from "./errors";
+import { ReinError } from "./errors";
 import type {
   CatalogProduct,
   ProductId,
@@ -179,8 +179,8 @@ export class DemoProcurementPlanner implements ProcurementPlanner {
   }
 }
 
-function modelTimeoutError(): ProofBuyError {
-  return new ProofBuyError({
+function modelTimeoutError(): ReinError {
+  return new ReinError({
     code: "MODEL_TIMEOUT",
     message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
     recovery:
@@ -188,8 +188,8 @@ function modelTimeoutError(): ProofBuyError {
   });
 }
 
-function modelResponseError(): ProofBuyError {
-  return new ProofBuyError({
+function modelResponseError(): ReinError {
+  return new ReinError({
     code: "MODEL_ERROR",
     message: "Gemini 응답 형식을 확인할 수 없습니다.",
     recovery:
@@ -300,7 +300,7 @@ export async function generateValidatedResearchBrief(
     } catch (error) {
       lastError = error;
       const retryable =
-        error instanceof ProofBuyError &&
+        error instanceof ReinError &&
         (error.detail.code === "MODEL_TIMEOUT" ||
           error.detail.code === "MODEL_ERROR");
       if (!retryable || options.signal?.aborted) throw error;
@@ -318,7 +318,7 @@ function parseStructuredJson<T>(raw: string, schema: z.ZodType<T>): T {
     if (start < 0 || end <= start) throw modelResponseError();
     return schema.parse(JSON.parse(cleaned.slice(start, end + 1)));
   } catch (error) {
-    if (error instanceof ProofBuyError) throw error;
+    if (error instanceof ReinError) throw error;
     throw modelResponseError();
   }
 }
@@ -333,7 +333,7 @@ export function parseModelProductIds(raw: string): ProductId[] {
     }
     return decision.productIds;
   } catch (error) {
-    if (error instanceof ProofBuyError) throw error;
+    if (error instanceof ReinError) throw error;
     throw modelResponseError();
   }
 }
@@ -352,7 +352,7 @@ interface AdkTextInput {
 async function runAdkText(input: AdkTextInput): Promise<string> {
   const project = process.env.GOOGLE_CLOUD_PROJECT;
   if (!project) {
-    throw new ProofBuyError({
+    throw new ReinError({
       code: "MODEL_ERROR",
       message: "Gemini 연결이 준비되지 않았습니다.",
       recovery: "서비스 상태를 확인한 뒤 다시 실행하세요.",
@@ -419,7 +419,7 @@ async function runAdkText(input: AdkTextInput): Promise<string> {
     if (!finalText.trim()) throw modelResponseError();
     return finalText;
   } catch (error) {
-    if (error instanceof ProofBuyError) throw error;
+    if (error instanceof ReinError) throw error;
     if (
       signal.aborted ||
       (error instanceof Error &&
@@ -541,7 +541,7 @@ export class VertexAdkProcurementPlanner implements ProcurementPlanner {
 }
 
 export function getRuntimeMode(): RuntimeMode {
-  return process.env.PROOFBUY_MODE === "live" ? "live" : "demo";
+  return process.env.REIN_MODE === "live" ? "live" : "demo";
 }
 
 export function getPlanner(mode = getRuntimeMode()): ProcurementPlanner {

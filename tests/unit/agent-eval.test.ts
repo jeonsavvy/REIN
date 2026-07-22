@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
-import { DemoProcurementPlanner } from "@/lib/proofbuy/planner";
-import { validatePlannerSelection } from "@/lib/proofbuy/policy";
-import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
-import type { ProcurementPlan } from "@/lib/proofbuy/types";
+import { loadFixtureCatalog } from "@/lib/rein/catalog-fixtures";
+import { DemoProcurementPlanner } from "@/lib/rein/planner";
+import { validatePlannerSelection } from "@/lib/rein/policy";
+import { MemoryReinStore } from "@/lib/rein/storage-memory";
+import type { ProcurementPlan } from "@/lib/rein/types";
 
-const store = new MemoryProofBuyStore();
+const store = new MemoryReinStore();
 const planner = new DemoProcurementPlanner();
 
 describe("fixed six-scenario agent evaluation", () => {

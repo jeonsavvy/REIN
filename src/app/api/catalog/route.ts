@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { loadCatalog } from "@/lib/proofbuy/catalog";
-import { getRuntimeMode } from "@/lib/proofbuy/planner";
-import { getStore } from "@/lib/proofbuy/store";
+import { loadCatalog } from "@/lib/rein/catalog";
+import { getRuntimeMode } from "@/lib/rein/planner";
+import { getStore } from "@/lib/rein/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

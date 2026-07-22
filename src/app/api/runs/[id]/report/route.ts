@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { toRunError } from "@/lib/proofbuy/errors";
+import { toRunError } from "@/lib/rein/errors";
 import {
   recoverRunReport,
   ReportRecoveryUnavailableError,
-} from "@/lib/proofbuy/report-recovery";
+} from "@/lib/rein/report-recovery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

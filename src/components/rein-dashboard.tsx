@@ -7,12 +7,12 @@ import {
   DEFAULT_BUDGET_ATOMIC,
   DEMO_PRESET_GOAL,
   MAX_RUN_ATOMIC,
-} from "@/lib/proofbuy/constants";
+} from "@/lib/rein/constants";
 import {
   formatUsdcAtomic,
   parseUsdcDisplay,
   safeSubtractAtomic,
-} from "@/lib/proofbuy/amount";
+} from "@/lib/rein/amount";
 import type {
   CatalogProduct,
   PaymentReceipt,
@@ -21,7 +21,7 @@ import type {
   RunStatus,
   RunView,
   RuntimeMode,
-} from "@/lib/proofbuy/types";
+} from "@/lib/rein/types";
 
 const RUN_EVENT_TYPES: RunEvent["type"][] = [
   "run.started",

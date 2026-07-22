@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   DEVNET_USDC_MINT,
   SOLANA_DEVNET,
-} from "@/lib/proofbuy/constants";
+} from "@/lib/rein/constants";
 import {
   validatePaymentCandidate,
   validatePlannerSelection,
   validateRunBudget,
   type PaymentPolicyCandidate,
-} from "@/lib/proofbuy/policy";
-import type { ProcurementPlan } from "@/lib/proofbuy/types";
+} from "@/lib/rein/policy";
+import type { ProcurementPlan } from "@/lib/rein/types";
 import { availableCatalog } from "./helpers";
 
 const both: ProcurementPlan = {

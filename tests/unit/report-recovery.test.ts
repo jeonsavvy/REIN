@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
-import { ProofBuyError } from "@/lib/proofbuy/errors";
-import { DemoProcurementPlanner, type ProcurementPlanner } from "@/lib/proofbuy/planner";
+import { loadFixtureCatalog } from "@/lib/rein/catalog-fixtures";
+import { ReinError } from "@/lib/rein/errors";
+import { DemoProcurementPlanner, type ProcurementPlanner } from "@/lib/rein/planner";
 import {
   recoverRunReport,
   ReportRecoveryUnavailableError,
-} from "@/lib/proofbuy/report-recovery";
-import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
-import type { PurchasedEvidence, ResearchBrief } from "@/lib/proofbuy/types";
+} from "@/lib/rein/report-recovery";
+import { MemoryReinStore } from "@/lib/rein/storage-memory";
+import type { PurchasedEvidence, ResearchBrief } from "@/lib/rein/types";
 import { paymentReceipt, paymentRecord } from "./helpers";
 
-const store = new MemoryProofBuyStore();
+const store = new MemoryReinStore();
 
 function geminiBrief(): ResearchBrief {
   return {
@@ -129,7 +129,7 @@ describe("report-only recovery", () => {
     const planner: ProcurementPlanner = {
       plan: vi.fn(),
       async synthesize() {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "MODEL_TIMEOUT",
           message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
           recovery: "기존 결과를 사용하세요.",

@@ -4,8 +4,8 @@ import { expect, test } from "@playwright/test";
 import {
   DEVNET_USDC_MINT,
   SOLANA_DEVNET,
-} from "@/lib/proofbuy/constants";
-import type { ResearchBrief, RunView } from "@/lib/proofbuy/types";
+} from "@/lib/rein/constants";
+import type { ResearchBrief, RunView } from "@/lib/rein/types";
 
 const eventTypes = [
   "run.started",

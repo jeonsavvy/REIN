@@ -5,7 +5,7 @@ import {
   MAX_REPORT_RECOVERY_ATTEMPTS,
   REPORT_RECOVERY_STALE_MS,
 } from "./constants";
-import type { NewRunEvent, ProofBuyStore } from "./storage";
+import type { NewRunEvent, ReinStore } from "./storage";
 import type {
   NewRunInput,
   PaymentReceipt,
@@ -49,17 +49,17 @@ function createState(): MemoryState {
 }
 
 const globalForStore = globalThis as typeof globalThis & {
-  __proofBuyMemoryState?: MemoryState;
+  __reinMemoryState?: MemoryState;
 };
 
 function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
-export class MemoryProofBuyStore implements ProofBuyStore {
+export class MemoryReinStore implements ReinStore {
   private get state(): MemoryState {
-    globalForStore.__proofBuyMemoryState ??= createState();
-    return globalForStore.__proofBuyMemoryState;
+    globalForStore.__reinMemoryState ??= createState();
+    return globalForStore.__reinMemoryState;
   }
 
   async createRun(input: NewRunInput): Promise<RunRecord> {
@@ -342,6 +342,6 @@ export class MemoryProofBuyStore implements ProofBuyStore {
   }
 
   async reset(): Promise<void> {
-    globalForStore.__proofBuyMemoryState = createState();
+    globalForStore.__reinMemoryState = createState();
   }
 }

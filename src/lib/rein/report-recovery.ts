@@ -4,7 +4,7 @@ import {
   type ProcurementPlanner,
 } from "./planner";
 import { getStore } from "./store";
-import type { ProofBuyStore } from "./storage";
+import type { ReinStore } from "./storage";
 import type { RunRecord, RunView } from "./types";
 
 export class ReportRecoveryUnavailableError extends Error {
@@ -15,7 +15,7 @@ export class ReportRecoveryUnavailableError extends Error {
 }
 
 export interface ReportRecoveryDependencies {
-  store?: ProofBuyStore;
+  store?: ReinStore;
   planner?: ProcurementPlanner;
 }
 

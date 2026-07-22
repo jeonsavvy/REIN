@@ -128,7 +128,7 @@ pnpm dev
 쓰는 demo 모드입니다. 이 모드에서는 결제에 서명하거나 트랜잭션을 전송하지
 않습니다.
 현재 공개 API 데이터만 사용하고 결제는 계속 모의 실행하려면
-`PROOFBUY_UPSTREAM_MODE=live`를 설정합니다.
+`REIN_UPSTREAM_MODE=live`를 설정합니다.
 
 ## API
 

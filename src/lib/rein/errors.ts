@@ -1,16 +1,16 @@
 import type { RunError } from "./types";
 
-export class ProofBuyError extends Error {
+export class ReinError extends Error {
   constructor(
     public readonly detail: RunError,
     public readonly ambiguousSettlement = false,
   ) {
     super(detail.message);
-    this.name = "ProofBuyError";
+    this.name = "ReinError";
   }
 }
 
-export class PolicyDeniedError extends ProofBuyError {
+export class PolicyDeniedError extends ReinError {
   constructor(message: string) {
     super({
       code: "POLICY_DENIED",
@@ -22,7 +22,7 @@ export class PolicyDeniedError extends ProofBuyError {
 }
 
 export function toRunError(error: unknown): RunError {
-  if (error instanceof ProofBuyError) return error.detail;
+  if (error instanceof ReinError) return error.detail;
   if (
     error instanceof Error &&
     (error.name === "AbortError" || error.name === "TimeoutError")

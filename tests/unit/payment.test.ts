@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { sha256 } from "@/lib/proofbuy/crypto";
+import { sha256 } from "@/lib/rein/crypto";
 import {
   LiveX402PaymentGateway,
   validatePaidSnapshot,
   x402SettlementFailure,
   x402TransportFailure,
-} from "@/lib/proofbuy/payment";
-import type { MarketSnapshotData, Snapshot } from "@/lib/proofbuy/types";
+} from "@/lib/rein/payment";
+import type { MarketSnapshotData, Snapshot } from "@/lib/rein/types";
 import { paymentRecord } from "./helpers";
 
 const data: MarketSnapshotData = {
@@ -64,10 +64,10 @@ describe("paid snapshot and live-origin binding", () => {
     const gateway = new LiveX402PaymentGateway();
     vi.stubEnv("APP_BASE_URL", "");
     await expect(
-      gateway.purchase({ payment, baseUrl: "https://proofbuy.example" }),
+      gateway.purchase({ payment, baseUrl: "https://rein.example" }),
     ).rejects.toThrow("결제 서비스 주소");
 
-    vi.stubEnv("APP_BASE_URL", "https://proofbuy.example");
+    vi.stubEnv("APP_BASE_URL", "https://rein.example");
     await expect(
       gateway.purchase({ payment, baseUrl: "https://evil.example" }),
     ).rejects.toThrow("허용된 서비스 주소");

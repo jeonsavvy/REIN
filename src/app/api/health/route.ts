@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getRuntimeMode } from "@/lib/proofbuy/planner";
-import { getStorageMode } from "@/lib/proofbuy/store";
+import { getRuntimeMode } from "@/lib/rein/planner";
+import { getStorageMode } from "@/lib/rein/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

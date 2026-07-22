@@ -1,20 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadFixtureCatalog } from "@/lib/proofbuy/catalog-fixtures";
-import { executeRun } from "@/lib/proofbuy/orchestrator";
-import { ProofBuyError } from "@/lib/proofbuy/errors";
+import { loadFixtureCatalog } from "@/lib/rein/catalog-fixtures";
+import { executeRun } from "@/lib/rein/orchestrator";
+import { ReinError } from "@/lib/rein/errors";
 import {
   DemoProcurementPlanner,
   type ProcurementPlanner,
-} from "@/lib/proofbuy/planner";
-import { MemoryProofBuyStore } from "@/lib/proofbuy/storage-memory";
-import type { PaymentGateway } from "@/lib/proofbuy/payment";
+} from "@/lib/rein/planner";
+import { MemoryReinStore } from "@/lib/rein/storage-memory";
+import type { PaymentGateway } from "@/lib/rein/payment";
 import type {
   PaymentReceipt,
   ResearchBrief,
   RuntimeMode,
-} from "@/lib/proofbuy/types";
+} from "@/lib/rein/types";
 
-const store = new MemoryProofBuyStore();
+const store = new MemoryReinStore();
 
 async function createClaimedRun(
   goal: string,
@@ -78,7 +78,7 @@ describe("procurement orchestration", () => {
   it("does not retry an ambiguous settlement and leaves it reconciling", async () => {
     const run = await createClaimedRun("SOL ETH 가격 비교", "1000");
     const purchase = vi.fn(async () => {
-      throw new ProofBuyError(
+      throw new ReinError(
         {
           code: "PAYMENT_RECONCILING",
           message: "facilitator response was lost after signing",
@@ -108,7 +108,7 @@ describe("procurement orchestration", () => {
       planner: new DemoProcurementPlanner(),
       gateway: {
         async purchase() {
-          throw new ProofBuyError({
+          throw new ReinError({
             code: "PAYMENT_FAILED",
             message: "facilitator rejected before settlement",
             recovery: "facilitator 상태를 확인하세요.",
@@ -134,7 +134,7 @@ describe("procurement orchestration", () => {
     const planner: ProcurementPlanner = {
       plan: (input) => deterministicPlanner.plan(input),
       async synthesize() {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "MODEL_TIMEOUT",
           message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
           recovery: "잠시 후 다시 실행하세요.",
@@ -226,7 +226,7 @@ describe("procurement orchestration", () => {
     const deterministicPlanner = new DemoProcurementPlanner();
     const planner: ProcurementPlanner = {
       async plan() {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "MODEL_TIMEOUT",
           message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
           recovery: "안전 규칙을 사용하세요.",
@@ -259,7 +259,7 @@ describe("procurement orchestration", () => {
     const purchase = vi.fn(successfulGateway().purchase);
     const planner: ProcurementPlanner = {
       async plan() {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "MODEL_TIMEOUT",
           message: "Gemini 응답이 제한 시간 안에 오지 않았습니다.",
           recovery: "잠시 후 다시 실행하세요.",

@@ -7,7 +7,7 @@ import { getStore } from "./store";
 import { productRouteFor } from "./payment";
 
 const globalForX402 = globalThis as typeof globalThis & {
-  __proofBuyX402Server?: x402ResourceServer;
+  __reinX402Server?: x402ResourceServer;
 };
 
 function parsePaymentPayload(encoded?: string): unknown {
@@ -39,8 +39,8 @@ function getPaymentIdFromPayload(payload: unknown): string | undefined {
 }
 
 export function getX402Server(): x402ResourceServer {
-  if (globalForX402.__proofBuyX402Server) {
-    return globalForX402.__proofBuyX402Server;
+  if (globalForX402.__reinX402Server) {
+    return globalForX402.__reinX402Server;
   }
   const facilitator = new HTTPFacilitatorClient({
     url: process.env.X402_FACILITATOR_URL ?? "https://x402.org/facilitator",
@@ -84,7 +84,7 @@ export function getX402Server(): x402ResourceServer {
       await getStore().saveResourceGrant(payment.id, payment.requestFingerprint);
     }
   });
-  globalForX402.__proofBuyX402Server = server;
+  globalForX402.__reinX402Server = server;
   return server;
 }
 

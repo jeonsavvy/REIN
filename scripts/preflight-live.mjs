@@ -12,11 +12,11 @@ const failures = [];
 for (const name of required) {
   if (!process.env[name]?.trim()) failures.push(`${name} is required`);
 }
-if (process.env.PROOFBUY_MODE !== "live") {
-  failures.push("PROOFBUY_MODE must be live");
+if (process.env.REIN_MODE !== "live") {
+  failures.push("REIN_MODE must be live");
 }
-if (process.env.PROOFBUY_STORAGE !== "firestore") {
-  failures.push("PROOFBUY_STORAGE must be firestore");
+if (process.env.REIN_STORAGE !== "firestore") {
+  failures.push("REIN_STORAGE must be firestore");
 }
 if (process.env.SVM_PAY_TO && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(process.env.SVM_PAY_TO)) {
   failures.push("SVM_PAY_TO must look like a base58 Solana address");

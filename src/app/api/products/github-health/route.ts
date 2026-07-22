@@ -1,4 +1,4 @@
-import { createPaidProductHandler } from "@/lib/proofbuy/product-route";
+import { createPaidProductHandler } from "@/lib/rein/product-route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

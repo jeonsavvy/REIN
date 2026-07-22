@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toRunError } from "@/lib/proofbuy/errors";
+import { toRunError } from "@/lib/rein/errors";
 
 describe("timeout error mapping", () => {
   it.each(["AbortError", "TimeoutError"])("maps %s to the visible timeout state", (name) => {

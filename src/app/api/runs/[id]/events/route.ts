@@ -1,7 +1,7 @@
-import { executeRun } from "@/lib/proofbuy/orchestrator";
-import { createId } from "@/lib/proofbuy/crypto";
-import { getStore } from "@/lib/proofbuy/store";
-import { TERMINAL_RUN_STATUSES } from "@/lib/proofbuy/constants";
+import { executeRun } from "@/lib/rein/orchestrator";
+import { createId } from "@/lib/rein/crypto";
+import { getStore } from "@/lib/rein/store";
+import { TERMINAL_RUN_STATUSES } from "@/lib/rein/constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

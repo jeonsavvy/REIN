@@ -20,7 +20,7 @@
 service-account*.json
 
 # runtime artifacts
-/.proofbuy
+/.rein
 *.log
 
 # local media, presentation, and review outputs

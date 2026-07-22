@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { toRunError } from "@/lib/proofbuy/errors";
-import { getRuntimeMode } from "@/lib/proofbuy/planner";
-import { validateRunBudget } from "@/lib/proofbuy/policy";
-import { getStore } from "@/lib/proofbuy/store";
+import { toRunError } from "@/lib/rein/errors";
+import { getRuntimeMode } from "@/lib/rein/planner";
+import { validateRunBudget } from "@/lib/rein/policy";
+import { getStore } from "@/lib/rein/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

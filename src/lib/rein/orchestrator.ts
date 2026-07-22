@@ -11,7 +11,7 @@ import {
 import { makePaymentFingerprint } from "./crypto";
 import {
   PolicyDeniedError,
-  ProofBuyError,
+  ReinError,
   toRunError,
 } from "./errors";
 import {
@@ -26,7 +26,7 @@ import {
 } from "./planner";
 import { validatePaymentCandidate, validatePlannerSelection } from "./policy";
 import { getStore } from "./store";
-import { kstDateKey, type NewRunEvent, type ProofBuyStore } from "./storage";
+import { kstDateKey, type NewRunEvent, type ReinStore } from "./storage";
 import type {
   CatalogProduct,
   PaymentRecord,
@@ -37,10 +37,10 @@ import type {
 } from "./types";
 
 export interface RunDependencies {
-  store?: ProofBuyStore;
+  store?: ReinStore;
   planner?: ProcurementPlanner;
   gateway?: PaymentGateway;
-  catalogLoader?: (store: ProofBuyStore) => Promise<CatalogProduct[]>;
+  catalogLoader?: (store: ReinStore) => Promise<CatalogProduct[]>;
   baseUrl?: string;
   signal?: AbortSignal;
 }
@@ -51,7 +51,7 @@ function combinedSignal(parent?: AbortSignal): AbortSignal {
 }
 
 async function emit(
-  store: ProofBuyStore,
+  store: ReinStore,
   runId: string,
   event: NewRunEvent,
 ): Promise<void> {
@@ -71,13 +71,13 @@ function selectedTotal(
 }
 
 async function markFailure(
-  store: ProofBuyStore,
+  store: ReinStore,
   run: RunRecord,
   error: unknown,
 ): Promise<void> {
   const detail = toRunError(error);
   const reconciling =
-    error instanceof ProofBuyError && error.ambiguousSettlement;
+    error instanceof ReinError && error.ambiguousSettlement;
   const denied = error instanceof PolicyDeniedError;
   const status = reconciling ? "reconciling" : denied ? "denied" : "failed";
   await store.updateRun(run.id, {
@@ -136,7 +136,7 @@ export async function executeRun(
       detail: `${availableCount}/${catalog.length}개 상품의 결제 전 스냅샷이 준비되었습니다.`,
     });
     if (availableCount === 0) {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "UPSTREAM_UNAVAILABLE",
         message: "구매 가능한 데이터 소스가 없습니다.",
         recovery: "CoinGecko와 GitHub 상태를 확인한 뒤 다시 실행하세요.",
@@ -184,7 +184,7 @@ export async function executeRun(
       signal.throwIfAborted();
       const product = catalog.find((item) => item.id === selection.productId);
       if (!product?.snapshotId) {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "UPSTREAM_UNAVAILABLE",
           message: `${selection.productId} 스냅샷이 만료되었거나 없습니다.`,
           recovery: "새 조사를 시작해 결제 전 스냅샷을 갱신하세요.",
@@ -192,7 +192,7 @@ export async function executeRun(
       }
       const snapshot = await store.getSnapshot(product.snapshotId);
       if (!snapshot || snapshot.productId !== selection.productId) {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "UPSTREAM_UNAVAILABLE",
           message: `${selection.productId} 스냅샷 데이터를 찾을 수 없습니다.`,
           recovery: "새 조사를 시작해 결제 전 스냅샷을 갱신하세요.",
@@ -201,7 +201,7 @@ export async function executeRun(
       const payTo =
         run.mode === "live" ? process.env.SVM_PAY_TO : "demo-receiver-no-wallet";
       if (!payTo) {
-        throw new ProofBuyError({
+        throw new ReinError({
           code: "PAYMENT_FAILED",
           message: "Devnet 수취 주소가 준비되지 않았습니다.",
           recovery: "결제 서비스 상태를 확인한 뒤 다시 실행하세요.",
@@ -296,7 +296,7 @@ export async function executeRun(
         });
       } catch (error) {
         const ambiguous =
-          error instanceof ProofBuyError && error.ambiguousSettlement;
+          error instanceof ReinError && error.ambiguousSettlement;
         await store.failPayment(
           payment.id,
           error instanceof Error ? error.message : "payment failed",
@@ -330,7 +330,7 @@ export async function executeRun(
       signal,
     });
     if (run.mode === "live" && brief.generatedBy !== "Gemini 3.5 Flash") {
-      throw new ProofBuyError({
+      throw new ReinError({
         code: "MODEL_ERROR",
         message: "Gemini 최종 보고서를 확인할 수 없습니다.",
         recovery: "구매 근거를 그대로 두고 Gemini 분석만 다시 시도하세요.",
