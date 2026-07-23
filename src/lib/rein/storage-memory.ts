@@ -6,6 +6,10 @@ import {
   REPORT_RECOVERY_STALE_MS,
 } from "./constants";
 import type { NewRunEvent, ReinStore } from "./storage";
+import {
+  applyUsageAdmission,
+  type UsageQuotaRecord,
+} from "./usage-quota";
 import type {
   NewRunInput,
   PaymentReceipt,
@@ -17,6 +21,7 @@ import type {
   RunView,
   Snapshot,
   ProductId,
+  UsageAdmission,
 } from "./types";
 
 interface QuotaRecord {
@@ -32,6 +37,8 @@ interface MemoryState {
   snapshotHeads: Map<ProductId, string>;
   evidence: Map<string, PurchasedEvidence[]>;
   quotas: Map<string, QuotaRecord>;
+  usageGlobal: Map<string, UsageQuotaRecord>;
+  usageClients: Map<string, UsageQuotaRecord>;
   resourceGrants: Map<string, string>;
 }
 
@@ -44,6 +51,8 @@ function createState(): MemoryState {
     snapshotHeads: new Map(),
     evidence: new Map(),
     quotas: new Map(),
+    usageGlobal: new Map(),
+    usageClients: new Map(),
     resourceGrants: new Map(),
   };
 }
@@ -62,7 +71,10 @@ export class MemoryReinStore implements ReinStore {
     return globalForStore.__reinMemoryState;
   }
 
-  async createRun(input: NewRunInput): Promise<RunRecord> {
+  async createRun(
+    input: NewRunInput,
+    admission?: UsageAdmission,
+  ): Promise<RunRecord> {
     const now = new Date().toISOString();
     const run: RunRecord = {
       id: createId("run"),
@@ -77,6 +89,22 @@ export class MemoryReinStore implements ReinStore {
       createdAt: now,
       updatedAt: now,
     };
+    if (admission) {
+      const clientQuotaKey = `${admission.quotaKey}:${admission.clientKey}`;
+      const next = applyUsageAdmission(
+        this.state.usageGlobal.get(admission.quotaKey) ?? {
+          runUnits: 0,
+          modelUnits: 0,
+        },
+        this.state.usageClients.get(clientQuotaKey) ?? {
+          runUnits: 0,
+          modelUnits: 0,
+        },
+        admission,
+      );
+      this.state.usageGlobal.set(admission.quotaKey, next.globalUsage);
+      this.state.usageClients.set(clientQuotaKey, next.clientUsage);
+    }
     this.state.runs.set(run.id, clone(run));
     this.state.events.set(run.id, []);
     this.state.evidence.set(run.id, []);
@@ -97,7 +125,10 @@ export class MemoryReinStore implements ReinStore {
     return true;
   }
 
-  async claimReportRecovery(runId: string): Promise<boolean> {
+  async claimReportRecovery(
+    runId: string,
+    admission?: UsageAdmission,
+  ): Promise<boolean> {
     const run = this.state.runs.get(runId);
     if (!run) return false;
     const attempts = run.reportRecoveryAttempts ?? 0;
@@ -113,6 +144,22 @@ export class MemoryReinStore implements ReinStore {
       attempts >= MAX_REPORT_RECOVERY_ATTEMPTS
     ) {
       return false;
+    }
+    if (admission) {
+      const clientQuotaKey = `${admission.quotaKey}:${admission.clientKey}`;
+      const next = applyUsageAdmission(
+        this.state.usageGlobal.get(admission.quotaKey) ?? {
+          runUnits: 0,
+          modelUnits: 0,
+        },
+        this.state.usageClients.get(clientQuotaKey) ?? {
+          runUnits: 0,
+          modelUnits: 0,
+        },
+        admission,
+      );
+      this.state.usageGlobal.set(admission.quotaKey, next.globalUsage);
+      this.state.usageClients.set(clientQuotaKey, next.clientUsage);
     }
     const now = new Date().toISOString();
     run.reportRecoveryState = "running";

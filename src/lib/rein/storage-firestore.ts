@@ -13,6 +13,10 @@ import {
   REPORT_RECOVERY_STALE_MS,
 } from "./constants";
 import type { NewRunEvent, ReinStore } from "./storage";
+import {
+  applyUsageAdmission,
+  readUsageQuota,
+} from "./usage-quota";
 import type {
   NewRunInput,
   PaymentReceipt,
@@ -24,6 +28,7 @@ import type {
   RunView,
   Snapshot,
   ProductId,
+  UsageAdmission,
 } from "./types";
 
 function clean<T>(value: T): T {
@@ -49,7 +54,24 @@ export class FirestoreReinStore implements ReinStore {
     this.db = getFirestore(app, process.env.FIRESTORE_DATABASE_ID ?? "(default)");
   }
 
-  async createRun(input: NewRunInput): Promise<RunRecord> {
+  private usageRefs(admission: UsageAdmission): {
+    global: DocumentReference;
+    client: DocumentReference;
+  } {
+    return {
+      global: this.db
+        .collection("usage_quota_global")
+        .doc(admission.quotaKey),
+      client: this.db
+        .collection("usage_quota_clients")
+        .doc(`${admission.quotaKey}_${admission.clientKey}`),
+    };
+  }
+
+  async createRun(
+    input: NewRunInput,
+    admission?: UsageAdmission,
+  ): Promise<RunRecord> {
     const now = new Date().toISOString();
     const run: RunRecord = {
       id: createId("run"),
@@ -64,7 +86,35 @@ export class FirestoreReinStore implements ReinStore {
       createdAt: now,
       updatedAt: now,
     };
-    await this.db.collection("runs").doc(run.id).create(clean(run));
+    const runRef = this.db.collection("runs").doc(run.id);
+    if (!admission) {
+      await runRef.create(clean(run));
+      return run;
+    }
+
+    const usageRefs = this.usageRefs(admission);
+    await this.db.runTransaction(async (tx) => {
+      const [globalDoc, clientDoc] = await Promise.all([
+        tx.get(usageRefs.global),
+        tx.get(usageRefs.client),
+      ]);
+      const next = applyUsageAdmission(
+        readUsageQuota(globalDoc.data()),
+        readUsageQuota(clientDoc.data()),
+        admission,
+      );
+      tx.create(runRef, clean(run));
+      tx.set(
+        usageRefs.global,
+        { ...next.globalUsage, updatedAt: now },
+        { merge: true },
+      );
+      tx.set(
+        usageRefs.client,
+        { ...next.clientUsage, updatedAt: now },
+        { merge: true },
+      );
+    });
     return run;
   }
 
@@ -87,10 +137,18 @@ export class FirestoreReinStore implements ReinStore {
     });
   }
 
-  async claimReportRecovery(runId: string): Promise<boolean> {
+  async claimReportRecovery(
+    runId: string,
+    admission?: UsageAdmission,
+  ): Promise<boolean> {
     const ref = this.db.collection("runs").doc(runId);
     return this.db.runTransaction(async (tx) => {
-      const doc = await tx.get(ref);
+      const usageRefs = admission ? this.usageRefs(admission) : undefined;
+      const [doc, globalDoc, clientDoc] = await Promise.all([
+        tx.get(ref),
+        usageRefs ? tx.get(usageRefs.global) : Promise.resolve(undefined),
+        usageRefs ? tx.get(usageRefs.client) : Promise.resolve(undefined),
+      ]);
       if (!doc.exists) return false;
       const run = doc.data() as RunRecord;
       const attempts = run.reportRecoveryAttempts ?? 0;
@@ -108,6 +166,23 @@ export class FirestoreReinStore implements ReinStore {
         return false;
       }
       const now = new Date().toISOString();
+      if (admission && usageRefs) {
+        const next = applyUsageAdmission(
+          readUsageQuota(globalDoc?.data()),
+          readUsageQuota(clientDoc?.data()),
+          admission,
+        );
+        tx.set(
+          usageRefs.global,
+          { ...next.globalUsage, updatedAt: now },
+          { merge: true },
+        );
+        tx.set(
+          usageRefs.client,
+          { ...next.clientUsage, updatedAt: now },
+          { merge: true },
+        );
+      }
       tx.update(ref, {
         reportRecoveryState: "running",
         reportRecoveryAttempts: attempts + 1,

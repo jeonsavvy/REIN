@@ -369,10 +369,14 @@ export function ReinDashboard() {
       });
       const body = (await response.json()) as {
         runId?: string;
-        error?: { message?: string };
+        error?: { message?: string; recovery?: string };
       };
       if (!response.ok || !body.runId) {
-        throw new Error(body.error?.message ?? "조사를 시작할 수 없습니다.");
+        throw new Error(
+          body.error?.message
+            ? [body.error.message, body.error.recovery].filter(Boolean).join(" ")
+            : "조사를 시작할 수 없습니다.",
+        );
       }
       setRunId(body.runId);
       window.history.replaceState({}, "", `?run=${encodeURIComponent(body.runId)}`);
@@ -416,10 +420,14 @@ export function ReinDashboard() {
         { method: "POST" },
       );
       const body = (await response.json()) as RunView & {
-        error?: { message?: string };
+        error?: { message?: string; recovery?: string };
       };
       if (!response.ok || !body.run) {
-        throw new Error(body.error?.message ?? "Gemini 분석을 다시 시작할 수 없습니다.");
+        throw new Error(
+          body.error?.message
+            ? [body.error.message, body.error.recovery].filter(Boolean).join(" ")
+            : "Gemini 분석을 다시 시작할 수 없습니다.",
+        );
       }
       setView(body);
       setEvents(body.events);

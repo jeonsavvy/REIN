@@ -3,6 +3,7 @@ import { base58 } from "@scure/base";
 const required = [
   "GOOGLE_CLOUD_PROJECT",
   "APP_BASE_URL",
+  "ABUSE_HMAC_KEY",
   "SVM_PRIVATE_KEY",
   "SVM_PAY_TO",
   "X402_FACILITATOR_URL",
@@ -30,6 +31,12 @@ if (process.env.SVM_PRIVATE_KEY) {
   } catch {
     failures.push("SVM_PRIVATE_KEY must be valid base58");
   }
+}
+if (
+  process.env.ABUSE_HMAC_KEY &&
+  process.env.ABUSE_HMAC_KEY.trim().length < 32
+) {
+  failures.push("ABUSE_HMAC_KEY must be at least 32 characters");
 }
 if (process.env.X402_FACILITATOR_URL) {
   try {

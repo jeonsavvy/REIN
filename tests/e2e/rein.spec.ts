@@ -226,6 +226,31 @@ test("shows a policy denial without attempting payment", async ({ page }) => {
   await expect(page.getByTestId("receipt-list")).toHaveCount(0);
 });
 
+test("shows a recoverable message when the public demo limit is reached", async ({
+  page,
+}) => {
+  await page.route("**/api/runs", async (route) => {
+    await route.fulfill({
+      status: 429,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: {
+          code: "USAGE_LIMIT_REACHED",
+          message: "현재 네트워크에서 오늘 실행 가능한 횟수를 모두 사용했습니다.",
+          recovery: "한국 시간 자정 이후 다시 시도하세요.",
+        },
+      }),
+    });
+  });
+  await page.goto("/");
+  await page.getByTestId("run-button").click();
+
+  await expect(page.locator("p.inline-error")).toHaveText(
+    "현재 네트워크에서 오늘 실행 가능한 횟수를 모두 사용했습니다. 한국 시간 자정 이후 다시 시도하세요.",
+  );
+  await expect(page.getByTestId("run-button")).toBeEnabled();
+});
+
 test("marks an incomplete Gemini report and retries without another payment", async ({
   page,
 }, testInfo) => {

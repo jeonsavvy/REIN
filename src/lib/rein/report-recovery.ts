@@ -5,7 +5,7 @@ import {
 } from "./planner";
 import { getStore } from "./store";
 import type { ReinStore } from "./storage";
-import type { RunRecord, RunView } from "./types";
+import type { RunRecord, RunView, UsageAdmission } from "./types";
 
 export class ReportRecoveryUnavailableError extends Error {
   constructor(message: string) {
@@ -17,6 +17,7 @@ export class ReportRecoveryUnavailableError extends Error {
 export interface ReportRecoveryDependencies {
   store?: ReinStore;
   planner?: ProcurementPlanner;
+  admission?: UsageAdmission;
 }
 
 function isRecoveryCandidate(run: RunRecord): boolean {
@@ -70,7 +71,7 @@ export async function recoverRunReport(
   }
   assertSettledEvidence(before);
 
-  if (!(await store.claimReportRecovery(runId))) {
+  if (!(await store.claimReportRecovery(runId, dependencies.admission))) {
     throw new ReportRecoveryUnavailableError(
       "Gemini 분석이 이미 진행 중이거나 허용된 재시도 횟수를 사용했습니다.",
     );

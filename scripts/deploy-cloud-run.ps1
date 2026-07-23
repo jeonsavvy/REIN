@@ -52,7 +52,7 @@ $deployArgs = @(
   "--concurrency=20",
   "--timeout=120s",
   "--set-env-vars=$envVars",
-  "--set-secrets=SVM_PRIVATE_KEY=rein-svm-private-key:latest"
+  "--set-secrets=SVM_PRIVATE_KEY=rein-svm-private-key:latest,ABUSE_HMAC_KEY=rein-abuse-hmac-key:latest"
 )
 
 Write-Host "Risk: this deploy creates a public Cloud Run revision and enables live Devnet signing for REIN."

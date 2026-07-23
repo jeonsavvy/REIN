@@ -204,6 +204,7 @@ export interface RunError {
     | "PAYMENT_RECONCILING"
     | "MODEL_TIMEOUT"
     | "MODEL_ERROR"
+    | "USAGE_LIMIT_REACHED"
     | "INTERNAL_ERROR";
   message: string;
   recovery: string;
@@ -221,6 +222,17 @@ export interface NewRunInput {
   maxBudgetAtomic: string;
   preset?: string;
   mode: RuntimeMode;
+}
+
+export interface UsageAdmission {
+  quotaKey: string;
+  clientKey: string;
+  runUnits: number;
+  modelUnits: number;
+  globalRunLimit: number;
+  clientRunLimit: number;
+  globalModelLimit: number;
+  clientModelLimit: number;
 }
 
 export interface ReservePaymentInput {

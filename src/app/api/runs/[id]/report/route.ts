@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { toRunError } from "@/lib/rein/errors";
+import { reportRecoveryUsageAdmission } from "@/lib/rein/abuse";
+import { toRunError, UsageLimitError } from "@/lib/rein/errors";
+import { getRuntimeMode } from "@/lib/rein/planner";
 import {
   recoverRunReport,
   ReportRecoveryUnavailableError,
@@ -11,16 +13,27 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 50;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
   try {
-    const view = await recoverRunReport(id);
+    const view = await recoverRunReport(id, {
+      admission:
+        getRuntimeMode() === "live"
+          ? reportRecoveryUsageAdmission(request)
+          : undefined,
+    });
     return NextResponse.json(view, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json(
+        { error: error.detail },
+        { status: 429, headers: { "Cache-Control": "no-store" } },
+      );
+    }
     if (error instanceof ReportRecoveryUnavailableError) {
       return NextResponse.json(
         {

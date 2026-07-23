@@ -9,6 +9,7 @@ import type {
   RunView,
   Snapshot,
   ProductId,
+  UsageAdmission,
 } from "./types";
 
 export type NewRunEvent = Omit<RunEvent, "id" | "seq" | "at"> & {
@@ -16,10 +17,16 @@ export type NewRunEvent = Omit<RunEvent, "id" | "seq" | "at"> & {
 };
 
 export interface ReinStore {
-  createRun(input: NewRunInput): Promise<RunRecord>;
+  createRun(
+    input: NewRunInput,
+    admission?: UsageAdmission,
+  ): Promise<RunRecord>;
   getRun(runId: string): Promise<RunRecord | undefined>;
   claimRun(runId: string, claimId: string): Promise<boolean>;
-  claimReportRecovery(runId: string): Promise<boolean>;
+  claimReportRecovery(
+    runId: string,
+    admission?: UsageAdmission,
+  ): Promise<boolean>;
   updateRun(runId: string, patch: Partial<RunRecord>): Promise<RunRecord>;
   appendEvent(runId: string, event: NewRunEvent): Promise<RunEvent>;
   listEvents(runId: string): Promise<RunEvent[]>;

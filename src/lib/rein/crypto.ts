@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomUUID } from "node:crypto";
 
 export function createId(prefix: string): string {
   return `${prefix}_${randomUUID().replaceAll("-", "")}`;
@@ -6,6 +6,10 @@ export function createId(prefix: string): string {
 
 export function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function hmacSha256(key: string, value: string): string {
+  return createHmac("sha256", key).update(value).digest("hex");
 }
 
 export function makePaymentFingerprint(input: {

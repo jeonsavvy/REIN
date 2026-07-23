@@ -29,7 +29,7 @@
     "@x402/next": "2.19.0",
     "@x402/svm": "2.19.0",
     "firebase-admin": "14.2.0",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "zod": "4.3.5"
@@ -41,7 +41,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.3",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vitest": "4.1.0"

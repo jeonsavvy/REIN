@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { sha256 } from "@/lib/rein/crypto";
 import { MemoryReinStore } from "@/lib/rein/storage-memory";
+import type { UsageAdmission } from "@/lib/rein/types";
 import { paymentReceipt, paymentRecord } from "./helpers";
 
 const store = new MemoryReinStore();
@@ -13,6 +15,140 @@ async function runningRun(maxBudgetAtomic = "10000") {
   expect(await store.claimRun(run.id, `claim_${run.id}`)).toBe(true);
   return run;
 }
+
+function usageAdmission(
+  client: string,
+  overrides: Partial<UsageAdmission> = {},
+): UsageAdmission {
+  return {
+    quotaKey: "2026-07-23",
+    clientKey: sha256(client),
+    runUnits: 1,
+    modelUnits: 3,
+    globalRunLimit: 100,
+    clientRunLimit: 25,
+    globalModelLimit: 400,
+    clientModelLimit: 100,
+    ...overrides,
+  };
+}
+
+describe("public demo usage admissions", () => {
+  beforeEach(async () => {
+    await store.reset();
+  });
+
+  it("accepts the exact per-client boundary and rejects the next run", async () => {
+    const limits = {
+      globalRunLimit: 10,
+      clientRunLimit: 2,
+      globalModelLimit: 30,
+      clientModelLimit: 6,
+    };
+    await store.createRun(
+      { goal: "first admitted run", maxBudgetAtomic: "3000", mode: "live" },
+      usageAdmission("client-a", limits),
+    );
+    await store.createRun(
+      { goal: "second admitted run", maxBudgetAtomic: "3000", mode: "live" },
+      usageAdmission("client-a", limits),
+    );
+
+    await expect(
+      store.createRun(
+        { goal: "third admitted run", maxBudgetAtomic: "3000", mode: "live" },
+        usageAdmission("client-a", limits),
+      ),
+    ).rejects.toMatchObject({ scope: "client" });
+    await expect(
+      store.createRun(
+        { goal: "other client run", maxBudgetAtomic: "3000", mode: "live" },
+        usageAdmission("client-b", limits),
+      ),
+    ).resolves.toMatchObject({ status: "queued" });
+  });
+
+  it("enforces the global boundary under concurrent admissions", async () => {
+    const limits = {
+      globalRunLimit: 2,
+      clientRunLimit: 2,
+      globalModelLimit: 6,
+      clientModelLimit: 6,
+    };
+    const attempts = await Promise.allSettled(
+      ["client-a", "client-b", "client-c"].map((client) =>
+        store.createRun(
+          {
+            goal: `concurrent run for ${client}`,
+            maxBudgetAtomic: "3000",
+            mode: "live",
+          },
+          usageAdmission(client, limits),
+        ),
+      ),
+    );
+
+    expect(attempts.filter((result) => result.status === "fulfilled")).toHaveLength(
+      2,
+    );
+    const rejected = attempts.find((result) => result.status === "rejected");
+    expect(rejected).toMatchObject({
+      status: "rejected",
+      reason: { scope: "global" },
+    });
+  });
+
+  it("shares the model-credit cap with report recovery", async () => {
+    const first = await store.createRun({
+      goal: "first report recovery",
+      maxBudgetAtomic: "3000",
+      mode: "live",
+    });
+    const second = await store.createRun({
+      goal: "second report recovery",
+      maxBudgetAtomic: "3000",
+      mode: "live",
+    });
+    const recoveryAdmission = usageAdmission("client-a", {
+      runUnits: 0,
+      modelUnits: 2,
+      globalRunLimit: 100,
+      clientRunLimit: 25,
+      globalModelLimit: 3,
+      clientModelLimit: 3,
+    });
+
+    await expect(
+      store.claimReportRecovery(first.id, recoveryAdmission),
+    ).resolves.toBe(true);
+    await expect(
+      store.claimReportRecovery(second.id, recoveryAdmission),
+    ).rejects.toMatchObject({ scope: "global" });
+  });
+
+  it("starts fresh on the next KST quota date", async () => {
+    const limits = {
+      globalRunLimit: 1,
+      clientRunLimit: 1,
+      globalModelLimit: 3,
+      clientModelLimit: 3,
+    };
+    await store.createRun(
+      { goal: "today admitted run", maxBudgetAtomic: "3000", mode: "live" },
+      usageAdmission("client-a", limits),
+    );
+
+    await expect(
+      store.createRun(
+        { goal: "tomorrow admitted run", maxBudgetAtomic: "3000", mode: "live" },
+        usageAdmission("client-a", {
+          ...limits,
+          quotaKey: "2026-07-24",
+        }),
+      ),
+    ).resolves.toMatchObject({ status: "queued" });
+  });
+});
 
 describe("atomic payment reservations", () => {
   beforeEach(async () => {

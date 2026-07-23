@@ -17,6 +17,12 @@ export const MAX_REPORT_SYNTHESIS_ATTEMPTS = 2;
 export const MAX_REPORT_RECOVERY_ATTEMPTS = 2;
 export const REPORT_RECOVERY_STALE_MS = 60_000;
 export const RUN_TIMEOUT_MS = 90_000;
+export const MAX_DAILY_RUN_ADMISSIONS = 100;
+export const MAX_DAILY_RUN_ADMISSIONS_PER_CLIENT = 25;
+export const MAX_DAILY_MODEL_CREDITS = 400;
+export const MAX_DAILY_MODEL_CREDITS_PER_CLIENT = 100;
+export const RUN_MODEL_CREDITS = 3;
+export const REPORT_RECOVERY_MODEL_CREDITS = 2;
 
 export const PRODUCT_DEFINITIONS: Record<ProductId, ProductDefinition> = {
   market_snapshot: {
