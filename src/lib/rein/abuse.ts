@@ -36,11 +36,9 @@ function normalizedForwardedIp(headers: Headers): string | undefined {
     .filter(Boolean);
   if (!forwarded?.length) return undefined;
 
-  // Google Cloud appends <client-ip>,<load-balancer-ip>. Values before that
-  // suffix are caller-controlled, so never use the first forwarded value.
-  const trustedClientPosition =
-    forwarded.length >= 2 ? forwarded.length - 2 : 0;
-  return normalizedIp(forwarded[trustedClientPosition]);
+  // Cloud Run's managed proxy appends the direct peer address. Any preceding
+  // values can be supplied by the caller, so only trust the final value.
+  return normalizedIp(forwarded.at(-1));
 }
 
 function protectionUnavailable(): ReinError {

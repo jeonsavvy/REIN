@@ -13,10 +13,10 @@ function requestFor(ip?: string): Request {
 describe("anonymous usage identity", () => {
   it("is stable within a KST day without retaining the raw IP", () => {
     const now = new Date("2026-07-23T01:00:00.000Z");
-    const first = clientUsageKey(
-      requestFor("203.0.113.7, 35.191.0.1"),
-      { now, secret: SECRET },
-    );
+    const first = clientUsageKey(requestFor("203.0.113.7"), {
+      now,
+      secret: SECRET,
+    });
     const second = clientUsageKey(requestFor("203.0.113.7"), {
       now,
       secret: SECRET,
@@ -29,12 +29,12 @@ describe("anonymous usage identity", () => {
 
   it("ignores caller-supplied addresses before Google's trusted suffix", () => {
     const now = new Date("2026-07-23T01:00:00.000Z");
-    const clean = clientUsageKey(
-      requestFor("203.0.113.7, 35.191.0.1"),
-      { now, secret: SECRET },
-    );
+    const clean = clientUsageKey(requestFor("203.0.113.7"), {
+      now,
+      secret: SECRET,
+    });
     const spoofed = clientUsageKey(
-      requestFor("198.51.100.200, 203.0.113.7, 35.191.0.1"),
+      requestFor("198.51.100.200, 203.0.113.7"),
       { now, secret: SECRET },
     );
 
